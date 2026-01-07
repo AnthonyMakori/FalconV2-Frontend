@@ -78,33 +78,67 @@ export default function MerchandisePage() {
   }
 
   // Handle form submission
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    const formData = new FormData()
-    formData.append("name", newProduct.name)
-    formData.append("category", newProduct.category)
-    formData.append("price", newProduct.price)
-    formData.append("stock", newProduct.stock)
-    formData.append("status", newProduct.status)
-    if (newProduct.image) formData.append("image", newProduct.image)
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault()
 
-    try {
-      const res = await fetch("http://localhost:8000/api/merchandise", {
-        method: "POST",
-        body: formData
-      })
+  // console.log("Submitting product:", newProduct)
+  // console.log("Image value:", newProduct.image)
+  // console.log("Image is File:", newProduct.image instanceof File)
 
-      if (res.ok) {
-        fetchMerchandise()
-        setShowModal(false)
-        setNewProduct({ name: "", category: "", price: "", stock: "", status: "In Stock", image: null })
-      } else {
-        console.error("Failed to add product")
-      }
-    } catch (error) {
-      console.error("Error adding product:", error)
-    }
+  const formData = new FormData()
+  formData.append("name", newProduct.name)
+  formData.append("category", newProduct.category)
+
+  // Force numeric values (FormData sends strings)
+  formData.append("price", Number(newProduct.price).toString())
+  formData.append("stock", Number(newProduct.stock).toString())
+
+  formData.append("status", newProduct.status)
+
+  if (newProduct.image) {
+    formData.append("image", newProduct.image)
   }
+
+  // Log FormData contents
+  for (const [key, value] of formData.entries()) {
+    // console.log(`FormData -> ${key}:`, value)
+  }
+
+  try {
+    const res = await fetch("http://localhost:8000/api/merchandise", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: formData,
+    })
+
+    console.log("Response status:", res.status)
+
+    if (!res.ok) {
+      const errorData = await res.json()
+      // console.error("Validation / API error:", errorData)
+      return
+    }
+
+    const data = await res.json()
+    // console.log("Product created successfully:", data)
+
+    fetchMerchandise()
+    setShowModal(false)
+    setNewProduct({
+      name: "",
+      category: "",
+      price: "",
+      stock: "",
+      status: "In Stock",
+      image: null,
+    })
+  } catch (error) {
+    // console.error("Network or fetch error:", error)
+  }
+}
+
 
   return (
     <div className="space-y-6">

@@ -43,7 +43,7 @@ interface Staff {
   avatar?: string
 }
 
-const API_URL = "http://localhost:8000/api/staff"
+const API_URL = "http://127.0.0.1:8000/api/staff"
 
 const getToken = () => {
   if (typeof window === "undefined") return null

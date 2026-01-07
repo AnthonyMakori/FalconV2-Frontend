@@ -23,12 +23,16 @@ import { apiFetch } from "@/utils/api"
 // ----------------------
 // TypeScript Types
 // ----------------------
-type Permission = {
-  id: number
-  name: string
-  description: string
-  category?: string
+type PermissionsResponse = {
+  permissions: Permission[]
+  roles: {
+    id: number
+    name: string
+    description: string
+    is_system: number
+  }[]
 }
+
 
 type Role = {
   id: number
@@ -61,23 +65,27 @@ export default function RolesPage() {
 
   // Fetch roles and permissions
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      setError("")
-      try {
-        const rolesData: Role[] = await apiFetch("http://127.0.0.1:8000/api/roles")
-        const permissionsData: Permission[] = await apiFetch("http://127.0.0.1:8000/api/permissions")
-        setRoles(rolesData)
-        setPermissions(permissionsData)
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch data")
-      } finally {
-        setLoading(false)
-      }
-    }
+  async function fetchData() {
+    setLoading(true)
+    setError("")
+    try {
+      const rolesData: Role[] = await apiFetch("http://127.0.0.1:8000/api/roles")
+      const permissionsResponse: PermissionsResponse = await apiFetch(
+        "http://127.0.0.1:8000/api/permissions"
+      )
 
-    fetchData()
-  }, [])
+      setRoles(rolesData)
+      setPermissions(permissionsResponse.permissions) 
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  fetchData()
+}, [])
+
 
   // Toggle permission selection for new role
   const togglePermission = (id: number) => {
