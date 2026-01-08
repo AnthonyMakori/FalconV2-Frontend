@@ -11,13 +11,14 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname()
 
-  const isAdminPage = pathname.startsWith("/admin")
+  const hideLayout =
+    pathname.startsWith("/admin") || pathname.startsWith("/dashboard")
 
   return (
     <div className="flex min-h-screen flex-col">
-      {!isAdminPage && <Header />}
+      {!hideLayout && <Header />}
       <main className="flex-1">{children}</main>
-      {!isAdminPage && <Footer />}
+      {!hideLayout && <Footer />}
     </div>
   )
 }

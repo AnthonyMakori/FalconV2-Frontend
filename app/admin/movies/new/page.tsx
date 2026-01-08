@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +11,128 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Upload, Plus, X } from "lucide-react"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
 export default function NewMoviePage() {
+  const [loading, setLoading] = useState(false)
+
+  // BASIC INFO
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [releaseYear, setReleaseYear] = useState("")
+  const [duration, setDuration] = useState("")
+  const [language, setLanguage] = useState("")
+  const [genre, setGenre] = useState("")
+  const [status, setStatus] = useState("draft")
+
+  // CAST & TAGS
+  const [castInput, setCastInput] = useState("")
+  const [casts, setCasts] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState("")
+  const [tags, setTags] = useState<string[]>([])
+
+  // MEDIA
+  const [poster, setPoster] = useState<File | null>(null)
+  const [trailer, setTrailer] = useState<File | null>(null)
+  const [movie, setMovie] = useState<File | null>(null)
+  const [subtitles, setSubtitles] = useState<File[]>([])
+
+  // PRICING
+  const [rentalPrice, setRentalPrice] = useState("")
+  const [purchasePrice, setPurchasePrice] = useState("")
+  const [rentalPeriod, setRentalPeriod] = useState("")
+  const [freePreview, setFreePreview] = useState(false)
+  const [previewDuration, setPreviewDuration] = useState("")
+
+  // SEO
+  const [seoTitle, setSeoTitle] = useState("")
+  const [seoDescription, setSeoDescription] = useState("")
+  const [seoKeywords, setSeoKeywords] = useState("")
+
+  // ------------------ HELPERS ------------------
+
+  const addCast = () => {
+    if (!castInput.trim()) return
+    setCasts([...casts, castInput.trim()])
+    setCastInput("")
+  }
+
+  const removeCast = (name: string) =>
+    setCasts(casts.filter(c => c !== name))
+
+  const addTag = () => {
+    if (!tagInput.trim()) return
+    setTags([...tags, tagInput.trim()])
+    setTagInput("")
+  }
+
+  const removeTag = (tag: string) =>
+    setTags(tags.filter(t => t !== tag))
+
+  // ------------------ SUBMIT ------------------
+
+  const submitMovie = async (publish = false) => {
+    setLoading(true)
+
+    const formData = new FormData()
+    const token = localStorage.getItem("token");
+
+    // BASIC
+    formData.append("title", title)
+    formData.append("description", description)
+    formData.append("release_year", releaseYear)
+    formData.append("duration", duration)
+    formData.append("language", language)
+    formData.append("genre", genre)
+    formData.append("status", publish ? "published" : status)
+
+    // PRICING
+    formData.append("rental_price", rentalPrice)
+    formData.append("purchase_price", purchasePrice)
+    formData.append("rental_period", rentalPeriod)
+    formData.append("free_preview", String(freePreview))
+    formData.append("preview_duration", previewDuration)
+
+    // SEO
+    formData.append("seo_title", seoTitle)
+    formData.append("seo_description", seoDescription)
+    formData.append("seo_keywords", seoKeywords)
+
+    // CAST & TAGS
+    casts.forEach(c => formData.append("casts[]", c))
+    tags.forEach(t => formData.append("tags[]", t))
+
+    // MEDIA
+    if (poster) formData.append("poster", poster)
+    if (trailer) formData.append("trailer", trailer)
+    if (movie) formData.append("movie", movie)
+    subtitles.forEach(s => formData.append("subtitles[]", s))
+
+    try {
+      const res = await fetch(`${API_URL}/movies`, {
+        method: "POST",
+         headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw err
+      }
+
+      alert("Movie saved successfully!")
+    } catch (err: any) {
+      console.error(err)
+      alert("Failed to save movie")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ------------------ UI ------------------
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -22,268 +144,272 @@ export default function NewMoviePage() {
         <h1 className="text-3xl font-bold">Add New Movie</h1>
       </div>
 
-      <Tabs defaultValue="basic" className="space-y-4">
+      <Tabs defaultValue="basic">
         <TabsList>
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
+          <TabsTrigger value="basic">Basic</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
 
+        {/* ---------------- BASIC ---------------- */}
         <TabsContent value="basic">
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
               <CardDescription>Enter the basic details of the movie</CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" placeholder="Enter movie title" />
+                <Label>Title</Label>
+                <Input value={title} onChange={e => setTitle(e.target.value)} />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Enter movie description" className="min-h-[120px]" />
+                <Label>Description</Label>
+                <Textarea
+                  className="min-h-[120px]"
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="year">Release Year</Label>
-                  <Input id="year" type="number" placeholder="2023" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (minutes)</Label>
-                  <Input id="duration" type="number" placeholder="120" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <Input id="language" placeholder="English" />
-                </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                <Input placeholder="Release Year" type="number" value={releaseYear} onChange={e => setReleaseYear(e.target.value)} />
+                <Input placeholder="Duration (min)" type="number" value={duration} onChange={e => setDuration(e.target.value)} />
+                <Input placeholder="Language" value={language} onChange={e => setLanguage(e.target.value)} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="genre">Genre</Label>
-                  <Select>
-                    <SelectTrigger id="genre">
-                      <SelectValue placeholder="Select genre" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="action">Action</SelectItem>
-                      <SelectItem value="comedy">Comedy</SelectItem>
-                      <SelectItem value="drama">Drama</SelectItem>
-                      <SelectItem value="horror">Horror</SelectItem>
-                      <SelectItem value="romance">Romance</SelectItem>
-                      <SelectItem value="thriller">Thriller</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Select onValueChange={setGenre}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select genre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["action","comedy","drama","horror","romance","thriller"].map(g => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select>
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* CAST */}
               <div className="space-y-2">
                 <Label>Cast</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-                    Actor Name
-                    <button className="text-muted-foreground hover:text-foreground">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-                    Another Actor
-                    <button className="text-muted-foreground hover:text-foreground">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {casts.map(c => (
+                    <span key={c} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
+                      {c}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeCast(c)} />
+                    </span>
+                  ))}
                 </div>
                 <div className="flex gap-2">
-                  <Input placeholder="Add cast member" />
-                  <Button type="button" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Input value={castInput} onChange={e => setCastInput(e.target.value)} />
+                  <Button size="sm" onClick={addCast}><Plus className="h-4 w-4" /></Button>
                 </div>
               </div>
 
+              {/* TAGS */}
               <div className="space-y-2">
                 <Label>Tags</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-                    African
-                    <button className="text-muted-foreground hover:text-foreground">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-                    Kenyan
-                    <button className="text-muted-foreground hover:text-foreground">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map(t => (
+                    <span key={t} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
+                      {t}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeTag(t)} />
+                    </span>
+                  ))}
                 </div>
                 <div className="flex gap-2">
-                  <Input placeholder="Add tag" />
-                  <Button type="button" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Input value={tagInput} onChange={e => setTagInput(e.target.value)} />
+                  <Button size="sm" onClick={addTag}><Plus className="h-4 w-4" /></Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+       {/* MEDIA */}
         <TabsContent value="media">
           <Card>
             <CardHeader>
               <CardTitle>Media Files</CardTitle>
-              <CardDescription>Upload movie poster, trailer, and video files</CardDescription>
+              <CardDescription>
+                Upload movie poster, trailer, full movie, and subtitles
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
+
+              {/* POSTER */}
               <div className="space-y-2">
                 <Label>Poster Image</Label>
                 <div className="border-2 border-dashed rounded-lg p-6 text-center">
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">Drag and drop or click to upload</p>
-                  <p className="text-xs text-muted-foreground">Recommended size: 500x750px</p>
-                  <Input type="file" className="hidden" id="poster-upload" />
-                  <Button type="button" variant="outline" size="sm" className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload the movie poster image
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Recommended size: 500×750px (JPG / PNG)
+                  </p>
+
+                  <Input
+                    id="poster-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setPoster(e.target.files?.[0] || null)}
+                  />
+
+                  <Button variant="outline" size="sm" className="mt-4">
                     <Label htmlFor="poster-upload" className="cursor-pointer">
-                      Select File
+                      Select Poster
                     </Label>
                   </Button>
                 </div>
               </div>
 
+              {/* TRAILER */}
               <div className="space-y-2">
                 <Label>Trailer Video</Label>
                 <div className="border-2 border-dashed rounded-lg p-6 text-center">
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">Drag and drop or click to upload</p>
-                  <p className="text-xs text-muted-foreground">Supported formats: MP4, MOV, MKV</p>
-                  <Input type="file" className="hidden" id="trailer-upload" />
-                  <Button type="button" variant="outline" size="sm" className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload a short trailer clip
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: MP4, MOV, MKV
+                  </p>
+
+                  <Input
+                    id="trailer-upload"
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => setTrailer(e.target.files?.[0] || null)}
+                  />
+
+                  <Button variant="outline" size="sm" className="mt-4">
                     <Label htmlFor="trailer-upload" className="cursor-pointer">
-                      Select File
+                      Select Trailer
                     </Label>
                   </Button>
                 </div>
               </div>
 
+              {/* FULL MOVIE */}
               <div className="space-y-2">
                 <Label>Full Movie</Label>
                 <div className="border-2 border-dashed rounded-lg p-6 text-center">
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">Drag and drop or click to upload</p>
-                  <p className="text-xs text-muted-foreground">Supported formats: MP4, MOV, MKV</p>
-                  <Input type="file" className="hidden" id="movie-upload" />
-                  <Button type="button" variant="outline" size="sm" className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload the full movie file
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: MP4, MOV, MKV
+                  </p>
+
+                  <Input
+                    id="movie-upload"
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => setMovie(e.target.files?.[0] || null)}
+                  />
+
+                  <Button variant="outline" size="sm" className="mt-4">
                     <Label htmlFor="movie-upload" className="cursor-pointer">
-                      Select File
+                      Select Movie File
                     </Label>
                   </Button>
                 </div>
               </div>
 
+              {/* SUBTITLES */}
               <div className="space-y-2">
                 <Label>Subtitle Files</Label>
                 <div className="border-2 border-dashed rounded-lg p-6 text-center">
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">Drag and drop or click to upload</p>
-                  <p className="text-xs text-muted-foreground">Supported formats: SRT, VTT</p>
-                  <Input type="file" className="hidden" id="subtitle-upload" multiple />
-                  <Button type="button" variant="outline" size="sm" className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload subtitle files (multiple allowed)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: SRT, VTT
+                  </p>
+
+                  <Input
+                    id="subtitle-upload"
+                    type="file"
+                    accept=".srt,.vtt"
+                    multiple
+                    className="hidden"
+                    onChange={(e) =>
+                      setSubtitles(Array.from(e.target.files || []))
+                    }
+                  />
+
+                  <Button variant="outline" size="sm" className="mt-4">
                     <Label htmlFor="subtitle-upload" className="cursor-pointer">
-                      Select Files
+                      Select Subtitle Files
                     </Label>
                   </Button>
                 </div>
               </div>
+
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* PRICING */}
         <TabsContent value="pricing">
           <Card>
-            <CardHeader>
-              <CardTitle>Pricing Information</CardTitle>
-              <CardDescription>Set up pricing for the movie</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="price">Rental Price (KES)</Label>
-                <Input id="price" type="number" placeholder="200" />
-              </div>
+            <CardContent className="space-y-4 pt-6">
+              <Input placeholder="Rental price" value={rentalPrice} onChange={e => setRentalPrice(e.target.value)} />
+              <Input placeholder="Purchase price" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} />
+              <Input placeholder="Rental period (hours)" value={rentalPeriod} onChange={e => setRentalPeriod(e.target.value)} />
 
-              <div className="space-y-2">
-                <Label htmlFor="purchase-price">Purchase Price (KES)</Label>
-                <Input id="purchase-price" type="number" placeholder="500" />
-              </div>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={freePreview} onChange={e => setFreePreview(e.target.checked)} />
+                Allow free preview
+              </label>
 
-              <div className="space-y-2">
-                <Label htmlFor="rental-period">Rental Period (hours)</Label>
-                <Input id="rental-period" type="number" placeholder="48" />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="free-preview" className="rounded border-gray-300" />
-                  <Label htmlFor="free-preview">Allow free preview</Label>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="preview-duration">Preview Duration (minutes)</Label>
-                <Input id="preview-duration" type="number" placeholder="5" />
-              </div>
+              <Input placeholder="Preview duration" value={previewDuration} onChange={e => setPreviewDuration(e.target.value)} />
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* SEO */}
         <TabsContent value="seo">
           <Card>
-            <CardHeader>
-              <CardTitle>SEO Information</CardTitle>
-              <CardDescription>Optimize for search engines</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="seo-title">SEO Title</Label>
-                <Input id="seo-title" placeholder="Enter SEO title" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="seo-description">Meta Description</Label>
-                <Textarea id="seo-description" placeholder="Enter meta description" className="min-h-[100px]" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="seo-keywords">Meta Keywords</Label>
-                <Input id="seo-keywords" placeholder="Enter keywords separated by commas" />
-              </div>
+            <CardContent className="space-y-4 pt-6">
+              <Input placeholder="SEO title" value={seoTitle} onChange={e => setSeoTitle(e.target.value)} />
+              <Textarea placeholder="SEO description" value={seoDescription} onChange={e => setSeoDescription(e.target.value)} />
+              <Input placeholder="Keywords" value={seoKeywords} onChange={e => setSeoKeywords(e.target.value)} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
       <div className="flex justify-end gap-4">
-        <Button variant="outline">Save as Draft</Button>
-        <Button>Publish Movie</Button>
+        <Button variant="outline" disabled={loading} onClick={() => submitMovie(false)}>
+          Save as Draft
+        </Button>
+        <Button disabled={loading} onClick={() => submitMovie(true)}>
+          Publish Movie
+        </Button>
       </div>
     </div>
   )

@@ -28,6 +28,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const API_URL = "http://127.0.0.1:8000/api"
 
@@ -43,47 +50,82 @@ export default function UsersPage() {
   const [lastPage, setLastPage] = useState(1)
   const [total, setTotal] = useState(0)
 
-  const token = typeof window !== "undefined"
-    ? localStorage.getItem("token")
-    : null
+  const [open, setOpen] = useState(false)
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "user",
+    status: "active",
+  })
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null
 
   /* ================= FETCH USERS ================= */
   const fetchUsers = async () => {
-  setLoading(true)
+    setLoading(true)
 
-  const params = new URLSearchParams({
-    search,
-    status,
-    role,
-    page: page.toString(),
-  })
+    const params = new URLSearchParams({
+      search,
+      status,
+      role,
+      page: page.toString(),
+    })
 
-  const res = await fetch(`${API_URL}/users?${params}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  })
+    const res = await fetch(`${API_URL}/users?${params}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    })
 
-  if (!res.ok) {
-    console.error("Failed to fetch users", await res.text())
+    if (!res.ok) {
+      console.error("Failed to fetch users")
+      setLoading(false)
+      return
+    }
+
+    const data = await res.json()
+
+    setUsers(data.data)
+    setLastPage(data.last_page)
+    setTotal(data.total)
     setLoading(false)
-    return
   }
-
-  const data = await res.json()
-
-  setUsers(data.data)
-  setLastPage(data.last_page)
-  setTotal(data.total)
-
-  setLoading(false)
-}
-
 
   useEffect(() => {
     fetchUsers()
   }, [search, status, role, page])
+
+  /* ================= CREATE USER ================= */
+  const createUser = async () => {
+    const res = await fetch(`${API_URL}/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(form),
+    })
+
+    if (!res.ok) {
+      alert("Failed to create user")
+      return
+    }
+
+    setOpen(false)
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      role: "user",
+      status: "active",
+    })
+
+    fetchUsers()
+  }
 
   /* ================= STATUS UPDATE ================= */
   const updateStatus = async (id: number, newStatus: string) => {
@@ -123,12 +165,88 @@ export default function UsersPage() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add User
           </Button>
         </div>
       </div>
+
+      {/* ADD USER MODAL */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              Create a new user account
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="Full Name"
+              value={form.name}
+              onChange={(e) =>
+                setForm({ ...form, name: e.target.value })
+              }
+            />
+
+            <Input
+              placeholder="Email"
+              type="email"
+              value={form.email}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+            />
+
+            <Input
+              placeholder="Password"
+              type="password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
+
+            <Select
+              value={form.role}
+              onValueChange={(value) =>
+                setForm({ ...form, role: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={form.status}
+              onValueChange={(value) =>
+                setForm({ ...form, status: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button className="w-full" onClick={createUser}>
+              Create User
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* FILTERS */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -186,81 +304,87 @@ export default function UsersPage() {
           </TableHeader>
 
           <TableBody>
-            {!loading && users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
+            {!loading &&
+              users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">
+                    {user.name}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          user.status === "Active"
+                            ? "bg-green-500"
+                            : user.status === "Inactive"
+                            ? "bg-gray-400"
+                            : user.status === "Pending"
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      {user.status}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {user.last_login_at
+                      ? new Date(
+                          user.last_login_at
+                        ).toLocaleDateString()
+                      : "Never"}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>
+                          Actions
+                        </DropdownMenuLabel>
 
-                <TableCell>
-                  <Badge variant="outline">{user.role}</Badge>
-                </TableCell>
+                        {user.status === "Active" ? (
+                          <DropdownMenuItem
+                            className="text-amber-600"
+                            onClick={() =>
+                              updateStatus(user.id, "Inactive")
+                            }
+                          >
+                            Deactivate
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            className="text-green-600"
+                            onClick={() =>
+                              updateStatus(user.id, "Active")
+                            }
+                          >
+                            Activate
+                          </DropdownMenuItem>
+                        )}
 
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        user.status === "Active"
-                          ? "bg-green-500"
-                          : user.status === "Inactive"
-                          ? "bg-gray-400"
-                          : user.status === "Pending"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                      }`}
-                    />
-                    {user.status}
-                  </div>
-                </TableCell>
+                        <DropdownMenuSeparator />
 
-                <TableCell>
-                  {user.last_login_at
-                    ? new Date(user.last_login_at).toLocaleDateString()
-                    : "Never"}
-                </TableCell>
-
-                <TableCell>
-                  {new Date(user.created_at).toLocaleDateString()}
-                </TableCell>
-
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-                      {user.status === "Active" ? (
                         <DropdownMenuItem
-                          className="text-amber-600"
-                          onClick={() => updateStatus(user.id, "Inactive")}
+                          className="text-red-600"
+                          onClick={() => deleteUser(user.id)}
                         >
-                          Deactivate
+                          Delete User
                         </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          className="text-green-600"
-                          onClick={() => updateStatus(user.id, "Active")}
-                        >
-                          Activate
-                        </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => deleteUser(user.id)}
-                      >
-                        Delete User
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
@@ -268,8 +392,8 @@ export default function UsersPage() {
       {/* PAGINATION */}
       <div className="flex justify-between text-sm">
         <div>
-          Showing page <strong>{page}</strong> of <strong>{lastPage}</strong> (
-          {total} users)
+          Showing page <strong>{page}</strong> of{" "}
+          <strong>{lastPage}</strong> ({total} users)
         </div>
 
         <div className="flex gap-2">
