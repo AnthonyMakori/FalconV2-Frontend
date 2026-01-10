@@ -106,8 +106,8 @@ export default function EventsPage() {
                   variant="outline"
                   className="w-full"
                   onClick={() => {
-                    setSelectedEvent(event) // ✅ set selected event
-                    setIsModalOpen(true) // ✅ open modal
+                    setSelectedEvent(event) 
+                    setIsModalOpen(true) 
                   }}
                 >
                   <ShoppingCart className="mr-2 h-4 w-4" />
