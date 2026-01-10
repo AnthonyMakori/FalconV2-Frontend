@@ -1,44 +1,32 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle
 } from "@/components/ui/card"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import {
-  Plus,
-  MoreHorizontal,
-  Edit,
-  Trash,
-  ToggleLeft,
-  ToggleRight,
+  Plus, MoreHorizontal, Trash, ToggleLeft, ToggleRight
 } from "lucide-react"
 
-/* ================= TYPES ================= */
+const API = process.env.NEXT_PUBLIC_API_URL!
 
+/* -------------------- TYPES -------------------- */
 interface PaymentPlan {
   id: number
   name: string
-  price: string
+  price: number
   currency: string
   duration: string
   features: string
@@ -52,198 +40,169 @@ interface PaymentMethod {
   is_active: boolean
 }
 
-/* ================= API HELPERS ================= */
+/* -------------------- HELPERS -------------------- */
+const authHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+  "Content-Type": "application/json",
+})
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("auth_token")
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  }
-}
-
-/* ================= PAGE ================= */
-
+/* -------------------- PAGE -------------------- */
 export default function PaymentPlansPage() {
   const [plans, setPlans] = useState<PaymentPlan[]>([])
   const [methods, setMethods] = useState<PaymentMethod[]>([])
-  const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  /* -------- Fetch Data -------- */
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    duration: "",
+    features: "",
+  })
 
+  /* ---------------- FETCH DATA ---------------- */
   const fetchPlans = async () => {
-    const res = await fetch(`${API_URL}/admin/payment-plans`, {
-      headers: getAuthHeaders(),
+    const res = await fetch(`${API}/admin/payment-plans`, {
+      headers: authHeaders(),
     })
     setPlans(await res.json())
   }
 
   const fetchMethods = async () => {
-    const res = await fetch(`${API_URL}/admin/payment-methods`, {
-      headers: getAuthHeaders(),
+    const res = await fetch(`${API}/admin/payment-methods`, {
+      headers: authHeaders(),
     })
     setMethods(await res.json())
   }
 
   useEffect(() => {
-    Promise.all([fetchPlans(), fetchMethods()]).finally(() =>
-      setLoading(false)
-    )
+    fetchPlans()
+    fetchMethods()
   }, [])
 
-  /* -------- Actions -------- */
-
-  const togglePlanStatus = async (id: number) => {
-    await fetch(`${API_URL}/admin/payment-plans/${id}/toggle`, {
+  /* ---------------- ACTIONS ---------------- */
+  const togglePlan = async (id: number) => {
+    await fetch(`${API}/admin/payment-plans/${id}/toggle`, {
       method: "PATCH",
-      headers: getAuthHeaders(),
+      headers: authHeaders(),
     })
     fetchPlans()
   }
 
   const deletePlan = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this plan?")) return
-
-    await fetch(`${API_URL}/admin/payment-plans/${id}`, {
+    if (!confirm("Delete this plan?")) return
+    await fetch(`${API}/admin/payment-plans/${id}`, {
       method: "DELETE",
-      headers: getAuthHeaders(),
+      headers: authHeaders(),
     })
     fetchPlans()
   }
 
-  const toggleMethodStatus = async (id: number) => {
-    await fetch(`${API_URL}/admin/payment-methods/${id}/toggle`, {
-      method: "PATCH",
-      headers: getAuthHeaders(),
+  const createPlan = async () => {
+    setLoading(true)
+    await fetch(`${API}/admin/payment-plans`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        ...form,
+        price: Number(form.price),
+        currency: "KES",
+      }),
     })
-    fetchMethods()
+    setLoading(false)
+    setOpen(false)
+    setForm({ name: "", price: "", duration: "", features: "" })
+    fetchPlans()
   }
 
-  if (loading) {
-    return <p className="text-muted-foreground">Loading payment data...</p>
-  }
-
+  /* ---------------- UI ---------------- */
   return (
     <div className="space-y-6">
-      {/* ===== Header ===== */}
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Payment Plans</h1>
-        <Link href="/admin/payment-plans/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Plan
-          </Button>
-        </Link>
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Plan
+        </Button>
       </div>
 
-      {/* ===== Payment Plans ===== */}
+      {/* PLANS TABLE */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment Plans Management</CardTitle>
-          <CardDescription>
-            Manage subscription and payment plans
-          </CardDescription>
+          <CardTitle>Plans</CardTitle>
+          <CardDescription>Manage subscription plans</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Features</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Features</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {plans.map(plan => (
+                <TableRow key={plan.id}>
+                  <TableCell className="font-medium">{plan.name}</TableCell>
+                  <TableCell>{plan.currency} {plan.price}</TableCell>
+                  <TableCell>{plan.duration}</TableCell>
+                  <TableCell>{plan.features}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      plan.is_active
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}>
+                      {plan.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => togglePlan(plan.id)}>
+                          {plan.is_active
+                            ? <ToggleLeft className="mr-2 h-4 w-4" />
+                            : <ToggleRight className="mr-2 h-4 w-4" />
+                          }
+                          {plan.is_active ? "Deactivate" : "Activate"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deletePlan(plan.id)}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {plans.map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">
-                      {plan.name}
-                    </TableCell>
-                    <TableCell>
-                      {plan.currency} {plan.price}
-                    </TableCell>
-                    <TableCell>{plan.duration}</TableCell>
-                    <TableCell>{plan.features}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          plan.is_active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {plan.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/payment-plans/${plan.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={() => togglePlanStatus(plan.id)}
-                          >
-                            {plan.is_active ? (
-                              <>
-                                <ToggleLeft className="mr-2 h-4 w-4" />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <ToggleRight className="mr-2 h-4 w-4" />
-                                Activate
-                              </>
-                            )}
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => deletePlan(plan.id)}
-                          >
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* ===== Payment Methods ===== */}
+      {/* PAYMENT METHODS */}
       <Card>
         <CardHeader>
           <CardTitle>Payment Methods</CardTitle>
-          <CardDescription>
-            Configure available payment gateways
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {methods.map((method) => (
+          {methods.map(method => (
             <div
               key={method.id}
-              className="flex items-center justify-between p-4 border rounded-md"
+              className="flex justify-between items-center border p-4 rounded-md"
             >
               <div>
                 <h3 className="font-medium">{method.name}</h3>
@@ -251,29 +210,57 @@ export default function PaymentPlansPage() {
                   {method.description}
                 </p>
               </div>
-
-              <div className="flex items-center gap-3">
-                <span
-                  className={`text-sm font-medium ${
-                    method.is_active
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {method.is_active ? "Active" : "Inactive"}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toggleMethodStatus(method.id)}
-                >
-                  Toggle
-                </Button>
-              </div>
+              <span className={`text-sm font-medium ${
+                method.is_active ? "text-green-600" : "text-red-600"
+              }`}>
+                {method.is_active ? "Active" : "Inactive"}
+              </span>
             </div>
           ))}
         </CardContent>
       </Card>
+
+      {/* ADD PLAN MODAL */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Payment Plan</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="Plan Name"
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={form.price}
+              onChange={e => setForm({ ...form, price: e.target.value })}
+            />
+            <Input
+              placeholder="Duration (e.g. 1 Month)"
+              value={form.duration}
+              onChange={e => setForm({ ...form, duration: e.target.value })}
+            />
+            <Textarea
+              placeholder="Features"
+              value={form.features}
+              onChange={e => setForm({ ...form, features: e.target.value })}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={createPlan}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Create Plan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

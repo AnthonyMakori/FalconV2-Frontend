@@ -56,12 +56,15 @@ export default function Header() {
     setIsMenuOpen(false)
   }, [pathname])
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/trending", label: "Trending" },
-    { href: "/popular", label: "Popular" },
-    { href: "/top-rated", label: "Top Rated" },
-  ]
+ const navItems = [
+  { href: "/", label: "Home" },
+  { href: "/trending", label: "Trending" },
+  { href: "/popular", label: "Popular" },
+  { href: "/top-rated", label: "Top Rated" },
+  { href: "/events", label: "Events" },
+  { href: "/merchandise", label: "Merchandise" },
+]
+
 
   return (
     <motion.header
