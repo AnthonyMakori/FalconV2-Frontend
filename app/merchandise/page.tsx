@@ -1,42 +1,137 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Image from "next/image"
-import { ShoppingBag } from "lucide-react"
+import Link from "next/link"
+import { Eye, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import BuyModal from "@/components/BuyModal"
+
+type Merchandise = {
+  id: number
+  name: string
+  description: string
+  price?: number
+  image: string
+  image_url: string
+}
 
 export default function MerchandisePage() {
+  const [merchandise, setMerchandise] = useState<Merchandise[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedMerch, setSelectedMerch] = useState<Merchandise | null>(null)
+
+  useEffect(() => {
+    const fetchMerchandise = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/merchandise")
+        if (!res.ok) throw new Error("Failed to fetch merchandise")
+        const data = await res.json()
+        setMerchandise(data)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMerchandise()
+  }, [])
+
+  const openBuyModal = (item: Merchandise) => {
+    setSelectedMerch(item)
+    setIsModalOpen(true)
+  }
+
+  const closeBuyModal = () => {
+    setIsModalOpen(false)
+    setSelectedMerch(null)
+  }
+
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">🛍 Merchandise</h1>
-        <p className="text-muted-foreground">
-          Official Falcon Eye Philmz merchandise — coming soon.
+      <div className="text-center mb-14">
+        <h1 className="text-4xl font-bold mb-4">Merchandise</h1>
+        <p className="text-muted-foreground max-w-xl mx-auto">
+          Explore official Falcon Eye Philmz merchandise crafted for true fans.
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {/* Product Placeholder */}
-        <div className="rounded-2xl border p-6 text-center hover:shadow-lg transition">
-          <div className="relative h-48 mb-4">
-            <Image
-              src="/images/merch-placeholder.png"
-              alt="Merchandise"
-              fill
-              className="object-contain"
-            />
-          </div>
+      {loading && (
+        <p className="text-center text-muted-foreground">
+          Loading merchandise…
+        </p>
+      )}
 
-          <h3 className="font-semibold mb-2">
-            Falcon Eye Branded Hoodie
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Premium quality hoodie with Falcon Eye Philmz branding.
-          </p>
+      {error && (
+        <p className="text-center text-red-500">{error}</p>
+      )}
 
-          <Button disabled className="w-full">
-            <ShoppingBag className="mr-2 h-4 w-4" />
-            Coming Soon
-          </Button>
+      {!loading && !error && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
+          {merchandise.map((item) => (
+            <div
+              key={item.id}
+              className="group rounded-2xl border bg-background overflow-hidden hover:shadow-xl transition"
+            >
+              {/* Image */}
+              <div className="relative h-64 overflow-hidden">
+                <Image
+                  src={item.image_url}
+                  alt={item.name}
+                  fill
+                  className="object-contain transition-transform duration-500 group-hover:scale-105"
+                />
+
+                {item.price && (
+                  <Badge className="absolute top-4 right-4 text-sm">
+                    KES {item.price.toLocaleString()}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="p-6 text-center space-y-3">
+                <h3 className="font-semibold text-lg">{item.name}</h3>
+
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {item.description}
+                </p>
+
+                <div className="flex gap-3 pt-4">
+                  <Button asChild className="w-full">
+                    <Link href={`/merchandise/${item.id}`}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View
+                    </Link>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => openBuyModal(item)}
+                  >
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Buy
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* Buy Modal */}
+      <BuyModal
+        item={selectedMerch}
+        isOpen={isModalOpen}
+        onClose={closeBuyModal}
+      />
     </div>
   )
 }
