@@ -70,7 +70,7 @@ export default function MerchandiseDetailsPage({
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="container mx-auto max-w-3xl">
+          <div className="container mx-start">
             <Badge className="mb-3">Official Merchandise</Badge>
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">
               {item.name}

@@ -7,7 +7,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, CalendarDays, MapPin, Info } from "lucide-react"
+import { ArrowLeft, CalendarDays, MapPin, Info, ShoppingCart } from "lucide-react"
+import BuyModal from "@/components/EventBuyModal" // ✅ import BuyModal
 
 type EventType = {
   id: number
@@ -24,6 +25,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
   const [event, setEvent] = useState<EventType | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false) // ✅ modal state
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -50,10 +52,10 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
   if (error || !event) return notFound()
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Hero */}
       {event.poster && (
-        <div className="relative h-[45vh] overflow-hidden">
+        <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
           <Image
             src={event.poster}
             alt={event.name}
@@ -63,13 +65,12 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
 
-          {/* Overlay: Badge + Title + Price */}
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="container mx-auto max-w-3xl">
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+            <div className=" mx-start">
               <Badge className="mb-3">{event.status || "Upcoming Event"}</Badge>
-              <h1 className="text-3xl sm:text-4xl font-bold mb-2">{event.name}</h1>
+              <h1 className="text-3xl md:text-5xl font-bold mb-2">{event.name}</h1>
               {event.price && (
-                <p className="text-xl font-semibold">
+                <p className="text-xl md:text-2xl font-semibold">
                   KES {parseFloat(event.price).toLocaleString()}
                 </p>
               )}
@@ -109,35 +110,64 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
               <p className="text-muted-foreground leading-relaxed">{event.description}</p>
             </div>
 
-            <div className="flex flex-wrap gap-4 text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <CalendarDays className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}
+            <div className="flex flex-wrap gap-6 text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                {new Date(event.date).toLocaleDateString()}
               </span>
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" /> {event.location}
+              <span className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                {event.location}
               </span>
             </div>
 
-            <div className="flex gap-4">
-              <Button size="lg" disabled>
-                Tickets Not Available
-              </Button>
-              <Button size="lg" variant="outline">
-                <Info className="mr-2 h-5 w-5" />
+            <div className="flex flex-wrap gap-4 mt-4">
+              {event.price ? (
+                <Button
+                  size="lg"
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  Buy Ticket
+                </Button>
+              ) : (
+                <Button size="lg" disabled>
+                  Tickets Not Available
+                </Button>
+              )}
+
+              <Button size="lg" variant="outline" className="flex items-center gap-2">
+                <Info className="h-5 w-5" />
                 More Details
               </Button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Buy Modal */}
+      <BuyModal
+        item={
+          event && event.price
+            ? {
+                id: event.id,
+                name: event.name,
+                price: parseFloat(event.price),
+              }
+            : null
+        }
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   )
 }
 
 function EventSkeleton() {
   return (
-    <div className="min-h-screen">
-      <div className="h-[45vh] bg-muted animate-pulse" />
+    <div className="min-h-screen bg-background">
+      <div className="h-[50vh] md:h-[60vh] bg-muted animate-pulse" />
       <div className="container mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Skeleton className="aspect-square rounded-xl" />
         <div className="lg:col-span-2 space-y-4">

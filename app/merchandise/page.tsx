@@ -55,9 +55,9 @@ export default function MerchandisePage() {
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="text-center mb-14">
+      <div className="text-start mb-14">
         <h1 className="text-4xl font-bold mb-4">Merchandise</h1>
-        <p className="text-muted-foreground max-w-xl mx-auto">
+        <p className="text-muted-foreground max-w-xl mx-start">
           Explore official Falcon Eye Philmz merchandise crafted for true fans.
         </p>
       </div>
@@ -73,21 +73,20 @@ export default function MerchandisePage() {
       )}
 
       {!loading && !error && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
           {merchandise.map((item) => (
             <div
               key={item.id}
-              className="group rounded-2xl border bg-background overflow-hidden hover:shadow-xl transition"
+              className="group rounded-2xl border bg-background overflow-hidden hover:shadow-xl transition flex flex-col"
             >
               {/* Image */}
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-80 w-full">
                 <Image
                   src={item.image_url}
                   alt={item.name}
                   fill
-                  className="object-contain transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-
                 {item.price && (
                   <Badge className="absolute top-4 right-4 text-sm">
                     KES {item.price.toLocaleString()}
@@ -96,12 +95,13 @@ export default function MerchandisePage() {
               </div>
 
               {/* Content */}
-              <div className="p-6 text-center space-y-3">
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {item.description}
-                </p>
+              <div className="p-6 text-center space-y-3 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">{item.name}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {item.description}
+                  </p>
+                </div>
 
                 <div className="flex gap-3 pt-4">
                   <Button asChild className="w-full">

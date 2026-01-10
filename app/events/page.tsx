@@ -53,9 +53,9 @@ export default function EventsPage() {
   return (
     <div className="px-4 py-16">
       {/* Header */}
-      <div className="text-center mb-14">
+      <div className="text-start mb-14">
         <h1 className="text-4xl font-bold mb-4">🎬 Events</h1>
-        <p className="text-muted-foreground max-w-xl mx-auto">
+        <p className="text-muted-foreground max-w-xl mx-start">
           Discover movie premieres, exclusive screenings, and Falcon Eye Philmz events near you.
         </p>
       </div>

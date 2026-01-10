@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 type Merchandise = {
@@ -16,63 +16,70 @@ type BuyModalProps = {
   onSuccess?: () => void
 }
 
-export default function BuyModal({
-  item,
-  isOpen,
-  onClose,
-  onSuccess,
-}: BuyModalProps) {
+export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalProps) {
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  // Reset fields when modal opens
+  useEffect(() => {
+    if (item) {
+      setPhone("")
+      setEmail("")
+      setError("")
+    }
+  }, [item])
 
   if (!isOpen || !item) return null
 
   const amount = Math.round(item.price ?? 0)
 
   const handleProceed = async () => {
-    if (!phone || !email) {
-      alert("Please enter both phone number and email")
+    const trimmedPhone = phone.trim()
+    const trimmedEmail = email.trim()
+
+    // Validation
+    if (!trimmedPhone || !trimmedEmail) {
+      setError("Please enter both phone number and email.")
       return
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      setError("Please enter a valid email address.")
+      return
+    }
+
+    setError("")
     setLoading(true)
+
     try {
       const res = await fetch("http://127.0.0.1:8000/api/events/stk/initiate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          merchandise_id: item.id,
-          phone,
-          email,
-          amount, 
+          event_id: item.id, 
+          phone: trimmedPhone,
+          email: trimmedEmail,
+          amount,
         }),
       })
 
-      if (!res.ok) {
-        const errData = await res.json()
-        throw new Error(errData.message || "Failed to initiate payment")
-      }
-
       const data = await res.json()
 
-      alert(
-        `Payment initiated successfully!\nTransaction ID: ${
-          data.transaction_id || "N/A"
-        }`
-      )
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to initiate payment")
+      }
+
+      alert(`Payment initiated successfully!\nCheckoutRequestID: ${data.CheckoutRequestID || "N/A"}`)
 
       setPhone("")
       setEmail("")
       onClose()
       if (onSuccess) onSuccess()
-    } catch (error: any) {
-      alert(
-        "Failed to initiate payment: " +
-          (error.message || "Unknown error")
-      )
+    } catch (err: any) {
+      setError(err.message || "Failed to initiate payment")
     } finally {
       setLoading(false)
     }
@@ -88,14 +95,11 @@ export default function BuyModal({
 
         {/* Price */}
         <p className="mb-4 text-muted-foreground">
-          Price:{" "}
-          <span className="font-medium">
-            KES {amount.toLocaleString()}
-          </span>
+          Price: <span className="font-medium">KES {amount.toLocaleString()}</span>
         </p>
 
         {/* Inputs */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <input
             type="text"
             placeholder="Phone Number"
@@ -103,7 +107,6 @@ export default function BuyModal({
             onChange={(e) => setPhone(e.target.value)}
             className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-
           <input
             type="email"
             placeholder="Email Address"
@@ -111,24 +114,18 @@ export default function BuyModal({
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />
+
+          {/* Inline Error */}
+          {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
         {/* Actions */}
         <div className="mt-6 flex gap-3">
-          <Button
-            className="w-full"
-            onClick={handleProceed}
-            disabled={loading}
-          >
+          <Button className="w-full" onClick={handleProceed} disabled={loading}>
             {loading ? "Processing..." : "Proceed to Payment"}
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={onClose}
-            disabled={loading}
-          >
+          <Button variant="outline" className="w-full" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
         </div>
