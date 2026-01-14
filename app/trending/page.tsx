@@ -7,7 +7,7 @@ import { Flame } from "lucide-react"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
 
 export const metadata = {
-  title: "Trending Movies - Cynthia Movies",
+  title: "Trending Movies - Falcon Eye Philmz",
   description: "Discover the hottest trending movies this week",
 }
 

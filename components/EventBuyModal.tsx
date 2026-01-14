@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+
 type Merchandise = {
   id: number
   name: string
@@ -55,7 +59,7 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
     setLoading(true)
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/events/stk/initiate", {
+      const res = await fetch(`${API_URL}/events/stk/initiate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

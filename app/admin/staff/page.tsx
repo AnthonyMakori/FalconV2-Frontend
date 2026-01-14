@@ -43,7 +43,7 @@ interface Staff {
   avatar?: string
 }
 
-const API_URL = "http://127.0.0.1:8000/api/staff"
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 const getToken = () => {
   if (typeof window === "undefined") return null
@@ -74,7 +74,7 @@ export default function StaffPage() {
 
     setLoading(true)
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${API_URL}/staff`, {
         headers: {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
@@ -115,7 +115,7 @@ export default function StaffPage() {
   if (!token) return
 
   try {
-    const res = await fetch(API_URL, {
+    const res = await fetch(`${API_URL}/staff`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

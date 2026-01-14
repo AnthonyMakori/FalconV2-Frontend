@@ -43,7 +43,7 @@ interface Blog {
   status: "Published" | "Draft"
 }
 
-const API_URL = "http://127.0.0.1:8000/api/blogs"
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([])
@@ -66,7 +66,7 @@ export default function BlogPage() {
 
   const fetchBlogs = async () => {
     setLoading(true)
-    const res = await apiFetch(API_URL)
+    const res = await apiFetch(`${API_URL}/blogs`)
     setBlogs(res.data ?? res)
     setLoading(false)
   }

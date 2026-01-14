@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
 
 export const metadata = {
-  title: "Search Movies - Cynthia Movies",
+  title: "Search Movies - Falcon Eye Philmz",
   description: "Search for movies, discover trending content, and get personalized recommendations",
 }
 

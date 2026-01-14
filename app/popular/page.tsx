@@ -7,7 +7,7 @@ import { TrendingUp } from "lucide-react"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
 
 export const metadata = {
-  title: "Popular Movies - Cynthia Movies",
+  title: "Popular Movies - Falcon Eye Philmz",
   description: "Discover the most popular movies right now",
 }
 

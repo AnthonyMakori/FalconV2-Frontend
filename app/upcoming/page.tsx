@@ -7,7 +7,7 @@ import { Calendar } from "lucide-react"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
 
 export const metadata = {
-  title: "Upcoming Movies - Cynthia Movies",
+  title: "Upcoming Movies - Falcon Eye Philmz",
   description: "Discover upcoming movie releases",
 }
 

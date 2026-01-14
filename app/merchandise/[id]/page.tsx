@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ShoppingBag, ArrowLeft, Info } from "lucide-react"
 import BuyModal from "@/components/BuyModal"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
 type Merchandise = {
   id: number
   name: string
@@ -38,7 +40,7 @@ export default function MerchandiseDetailsPage({
     const fetchItem = async () => {
       try {
         const res = await fetch(
-          `http://127.0.0.1:8000/api/merchandise/${params.id}`
+          `${API_URL}/merchandise/${params.id}`
         )
         if (!res.ok) throw new Error("Merchandise not found")
         const data = await res.json()

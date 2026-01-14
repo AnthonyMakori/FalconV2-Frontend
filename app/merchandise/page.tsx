@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import BuyModal from "@/components/BuyModal"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+
 type Merchandise = {
   id: number
   name: string
@@ -29,7 +32,7 @@ export default function MerchandisePage() {
   useEffect(() => {
     const fetchMerchandise = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/merchandise")
+        const res = await fetch(`${API_URL}/merchandise`)
         if (!res.ok) throw new Error("Failed to fetch merchandise")
         const data = await res.json()
         setMerchandise(data)

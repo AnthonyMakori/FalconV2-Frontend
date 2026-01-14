@@ -9,6 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+
 export default function SignIn() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -24,7 +27,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   const password = formData.get("password") as string
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/login", {
+    const response = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

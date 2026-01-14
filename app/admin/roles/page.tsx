@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { apiFetch } from "@/utils/api"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
 // ----------------------
 // TypeScript Types
 // ----------------------
@@ -69,9 +71,9 @@ export default function RolesPage() {
     setLoading(true)
     setError("")
     try {
-      const rolesData: Role[] = await apiFetch("http://127.0.0.1:8000/api/roles")
+      const rolesData: Role[] = await apiFetch(`${API_URL}/roles`)
       const permissionsResponse: PermissionsResponse = await apiFetch(
-        "http://127.0.0.1:8000/api/permissions"
+        `${API_URL}/permissions`
       )
 
       setRoles(rolesData)
@@ -105,7 +107,7 @@ export default function RolesPage() {
     }
 
     try {
-      const savedRole: Role = await apiFetch("http://127.0.0.1:8000/api/roles", {
+      const savedRole: Role = await apiFetch(`${API_URL}/roles`, {
         method: "POST",
         body: JSON.stringify(newRole),
       })

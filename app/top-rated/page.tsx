@@ -7,7 +7,7 @@ import { Award } from "lucide-react"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
 
 export const metadata = {
-  title: "Top Rated Movies - Cynthia Movies",
+  title: "Top Rated Movies - Falcon Eye Philmz",
   description: "Discover the highest rated movies of all time",
 }
 

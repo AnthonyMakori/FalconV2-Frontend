@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+
 type Merchandise = {
   id: number
   name: string
@@ -39,7 +42,7 @@ export default function BuyModal({
 
     setLoading(true)
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/initiate/merchandise", {
+      const res = await fetch(`${API_URL}/initiate/merchandise`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

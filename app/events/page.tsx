@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import BuyModal from "@/components/EventBuyModal" 
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
 type Event = {
   id: number
   name: string
@@ -31,7 +33,7 @@ export default function EventsPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/events")
+        const res = await fetch(`${API_URL}/events`)
         if (!res.ok) throw new Error("Failed to fetch events")
 
         const json = await res.json()

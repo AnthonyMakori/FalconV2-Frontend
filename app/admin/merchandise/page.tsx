@@ -17,6 +17,9 @@ import {
   DialogClose
 } from "@/components/ui/dialog"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+
 interface Merchandise {
   id: number
   name: string
@@ -47,7 +50,7 @@ export default function MerchandisePage() {
   // Fetch merchandise from Laravel API
   const fetchMerchandise = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/merchandise")
+      const res = await fetch(`${API_URL}/merchandise`)
       const data = await res.json()
       setMerchandise(data)
     } catch (error) {
@@ -105,7 +108,7 @@ const handleSubmit = async (e: FormEvent) => {
   }
 
   try {
-    const res = await fetch("http://localhost:8000/api/merchandise", {
+    const res = await fetch(`${API_URL}/merchandise`, {
       method: "POST",
       headers: {
         Accept: "application/json",

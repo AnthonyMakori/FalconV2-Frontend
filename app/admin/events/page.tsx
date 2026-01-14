@@ -34,6 +34,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Trash } from "lucide-react"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+
 type EventType = {
   id: number
   name: string
@@ -76,7 +79,7 @@ export default function EventsPage() {
     setLoading(true)
     setError("")
     try {
-      const res = await apiFetch("http://127.0.0.1:8000/api/events")
+      const res = await apiFetch(`${API_URL}/events`)
       setEvents(res.data.data)
     } catch (err: any) {
       setError(err.message || "Failed to load events")
@@ -105,7 +108,7 @@ export default function EventsPage() {
         console.log("FormData ->", pair[0], pair[1])
       }
 
-      await apiFetch("http://127.0.0.1:8000/api/events", {
+      await apiFetch(`${API_URL}/events`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -132,7 +135,7 @@ export default function EventsPage() {
     setLoading(true)
     setError("")
     try {
-      await apiFetch(`http://127.0.0.1:8000/api/events/${id}`, { method: "DELETE" })
+      await apiFetch(`${API_URL}/events/${id}`, { method: "DELETE" })
       loadEvents()
     } catch (err: any) {
       setError(err.message || "Failed to delete event")

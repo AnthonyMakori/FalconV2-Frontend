@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { Film } from "lucide-react"
 
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 interface AuthFormProps {
   type: "signin" | "signup" | "reset"
 }
@@ -30,7 +32,7 @@ export function AuthForm({ type }: AuthFormProps) {
 
   try {
     if (type === "signup") {
-      const response = await fetch("http://127.0.0.1:8000/api/register", {
+      const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

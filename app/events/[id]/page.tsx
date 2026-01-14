@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ArrowLeft, CalendarDays, MapPin, Info, ShoppingCart } from "lucide-react"
-import BuyModal from "@/components/EventBuyModal" // ✅ import BuyModal
+import BuyModal from "@/components/EventBuyModal" 
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 type EventType = {
   id: number
@@ -25,7 +27,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
   const [event, setEvent] = useState<EventType | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false) // ✅ modal state
+  const [isModalOpen, setIsModalOpen] = useState(false) 
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -34,7 +36,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/events/${params.id}`)
+        const res = await fetch(`${API_URL}/events/${params.id}`)
         if (!res.ok) throw new Error("Event not found")
         const data = await res.json()
         setEvent(data)

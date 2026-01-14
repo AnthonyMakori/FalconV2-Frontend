@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: `Watch ${movie.title} - Cynthia Movies`,
+    title: `Watch ${movie.title} - Falcon Eye Philmz`,
     description: `Watch trailer and clips for ${movie.title}`,
   }
 }
