@@ -289,7 +289,7 @@ const handleSubmit = async (e: FormEvent) => {
                     <TableCell>
                       {product.image ? (
                         <img
-                          src={`http://localhost:8000/storage/${product.image}`}
+                          src={`${API_URL}/storage/${product.image}`}
                           alt={product.name}
                           className="h-10 w-10 object-cover rounded"
                         />
