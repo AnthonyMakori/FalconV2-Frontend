@@ -26,10 +26,6 @@ export default function RecommendedMovies() {
           return
         }
 
-        console.log("Fetching personalized recommendations...")
-        console.log("Favorites count:", favorites.length)
-        console.log("Watchlist count:", watchlist.length)
-
         const recommendations = await getPersonalizedRecommendations(10)
         console.log("Received recommendations:", recommendations.length)
 
@@ -72,13 +68,14 @@ export default function RecommendedMovies() {
           <p className="text-muted-foreground mb-4">
             Sign in to track your favorite movies and get personalized recommendations
           </p>
-          <Button onClick={() => signIn("google")}>Sign In</Button>
+          <Button asChild>
+            <a href="/auth/signin">Sign In</a>
+          </Button>
         </div>
       </section>
     )
   }
 
-  // Show recommendations if we have any
   if (movies.length > 0) {
     return (
       <section className="my-8">
@@ -92,7 +89,6 @@ export default function RecommendedMovies() {
     )
   }
 
-  // Show message to add more movies for better recommendations
   return (
     <section className="my-8">
       <SectionHeading title="Recommended For You" description="Add more movies to get better recommendations" />

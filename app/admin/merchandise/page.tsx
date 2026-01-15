@@ -79,20 +79,13 @@ export default function MerchandisePage() {
       setNewProduct({ ...newProduct, [name]: value })
     }
   }
-
-  // Handle form submission
 const handleSubmit = async (e: FormEvent) => {
   e.preventDefault()
-
-  // console.log("Submitting product:", newProduct)
-  // console.log("Image value:", newProduct.image)
-  // console.log("Image is File:", newProduct.image instanceof File)
 
   const formData = new FormData()
   formData.append("name", newProduct.name)
   formData.append("category", newProduct.category)
 
-  // Force numeric values (FormData sends strings)
   formData.append("price", Number(newProduct.price).toString())
   formData.append("stock", Number(newProduct.stock).toString())
 
@@ -104,7 +97,6 @@ const handleSubmit = async (e: FormEvent) => {
 
   // Log FormData contents
   for (const [key, value] of formData.entries()) {
-    // console.log(`FormData -> ${key}:`, value)
   }
 
   try {
@@ -120,12 +112,10 @@ const handleSubmit = async (e: FormEvent) => {
 
     if (!res.ok) {
       const errorData = await res.json()
-      // console.error("Validation / API error:", errorData)
       return
     }
 
     const data = await res.json()
-    // console.log("Product created successfully:", data)
 
     fetchMerchandise()
     setShowModal(false)
