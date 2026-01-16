@@ -9,11 +9,15 @@ export function OverviewTab({
   continueWatching = [],
   events = [],
   eventsLoading = false,
+  watchHistoryCount = 0,
+  watchlistCount = 0,
 }: {
   totalSpent?: number
   continueWatching?: any[]
   events?: any[]
   eventsLoading?: boolean
+  watchHistoryCount?: number
+  watchlistCount?: number
 }) {
   return (
     <div className="space-y-4">
@@ -23,7 +27,7 @@ export function OverviewTab({
             <CardTitle className="text-sm font-medium">Watch History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{watchHistoryCount}</div>
             <p className="text-xs text-muted-foreground">
               Movies watched this month
             </p>
@@ -41,7 +45,7 @@ export function OverviewTab({
             <CardTitle className="text-sm font-medium">Watchlist</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{watchlistCount}</div>
             <p className="text-xs text-muted-foreground">
               Items in your watchlist
             </p>
@@ -84,3 +88,4 @@ export function OverviewTab({
     </div>
   )
 }
+

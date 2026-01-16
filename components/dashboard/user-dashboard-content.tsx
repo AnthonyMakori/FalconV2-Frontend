@@ -26,10 +26,19 @@ export function UserDashboardContent() {
           <TabsTrigger value="purchases">Purchases</TabsTrigger>
         </TabsList>
 
+        {/* Overview Tab with dynamic counts */}
         <TabsContent value="overview">
-          <OverviewTab {...data} />
+          <OverviewTab
+            totalSpent={data.totalSpent}
+            continueWatching={data.continueWatching}
+            events={data.events}
+            eventsLoading={data.eventsLoading}
+            watchHistoryCount={data.watchHistory.length}
+            watchlistCount={data.watchlist.length}
+          />
         </TabsContent>
 
+        {/* Other tabs */}
         <TabsContent value="watchlist">
           <WatchlistTab watchlist={data.watchlist} />
         </TabsContent>
