@@ -108,6 +108,10 @@ export function UserDashboardContent() {
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<any[]>([])
   const [eventsLoading, setEventsLoading] = useState(true)
+  const [purchases, setPurchases] = useState<any[]>([])
+  const [totalSpent, setTotalSpent] = useState<number>(0)
+  const [purchasesLoading, setPurchasesLoading] = useState(true)
+
 
   const token =
     typeof window !== "undefined"
@@ -156,9 +160,51 @@ export function UserDashboardContent() {
   }
 }
 
+const fetchPurchases = async () => {
+  try {
+    const res = await fetch(`${API_URL}/purchases`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    })
+
+    if (!res.ok) throw new Error("Failed to fetch purchases")
+
+    const data = await res.json()
+    setPurchases(data)
+  } catch (error) {
+    console.error(error)
+    setPurchases([])
+  } finally {
+    setPurchasesLoading(false)
+  }
+}
+
+const fetchPurchaseSummary = async () => {
+  try {
+    const res = await fetch(`${API_URL}/purchases/summary`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    })
+
+    if (!res.ok) throw new Error("Failed to fetch summary")
+
+    const data = await res.json()
+    setTotalSpent(data.total_spent)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+
   useEffect(() => {
     fetchUser()
       fetchEvents()
+       fetchPurchases()
+        fetchPurchaseSummary()
   }, [])
 
   if (loading) {
@@ -252,20 +298,22 @@ export function UserDashboardContent() {
               </CardFooter>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Purchases</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">KES 2,250</div>
-                <p className="text-xs text-muted-foreground">Total spent this month</p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="ghost" size="sm" className="w-full">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  View Purchases
-                </Button>
-              </CardFooter>
-            </Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Purchases</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                KES {totalSpent.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">Total spent this month</p>
+            </CardContent>
+            <CardFooter>
+              <Button variant="ghost" size="sm" className="w-full">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                View Purchases
+              </Button>
+            </CardFooter>
+          </Card>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -462,21 +510,30 @@ export function UserDashboardContent() {
             </CardFooter>
           </Card>
         </TabsContent>
-        <TabsContent value="purchases" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Purchases</CardTitle>
-              <CardDescription>Movies, series, and subscriptions you've purchased</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {purchases.map((item) => (
-                  <div key={item.id} className="flex gap-4 border-b pb-4 last:border-0 last:pb-0">
+       <TabsContent value="purchases" className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Purchases</CardTitle>
+            <CardDescription>Movies, series, and subscriptions you've purchased</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <div className="space-y-4">
+              {purchasesLoading ? (
+                <p className="text-sm text-muted-foreground">Loading purchases...</p>
+              ) : purchases.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No purchases yet</p>
+              ) : (
+                purchases.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 border-b pb-4 last:border-0 last:pb-0"
+                  >
                     {item.thumbnail ? (
                       <div className="relative w-[100px] h-[60px] rounded-md overflow-hidden">
                         <img
                           src={item.thumbnail || "/placeholder.svg"}
-                          alt={item.title}
+                          alt={item.title || `Movie ${item.movie_id}`}
                           className="object-cover w-full h-full"
                         />
                       </div>
@@ -485,17 +542,28 @@ export function UserDashboardContent() {
                         <CreditCard className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
+
                     <div className="flex-1">
-                      <h4 className="font-medium">{item.title}</h4>
+                      <h4 className="font-medium">
+                        {item.title ? item.title : `Movie ID: ${item.movie_id}`}
+                      </h4>
                       <div className="flex items-center text-sm text-muted-foreground">
-                        <Badge variant="outline" className="mr-2">
-                          {item.type}
-                        </Badge>
-                        <span>Purchased on {item.date}</span>
+                        {item.type && (
+                          <Badge variant="outline" className="mr-2">
+                            {item.type}
+                          </Badge>
+                        )}
+                        <span>
+                          Purchased on{" "}
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
+
                     <div className="text-right">
-                      <div className="font-medium">{item.amount}</div>
+                      <div className="font-medium">
+                        KES {Number(item.amount).toLocaleString()}
+                      </div>
                       {item.type !== "Subscription" && (
                         <Button variant="link" size="sm" className="px-0 h-auto">
                           Watch now
@@ -503,21 +571,23 @@ export function UserDashboardContent() {
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Payment Methods
-              </Button>
-              <Button variant="outline">
-                View All Transactions
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+                ))
+              )}
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-between">
+            <Button variant="outline">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Payment Methods
+            </Button>
+            <Button variant="outline">
+              View All Transactions
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
       </Tabs>
     </div>
   )
