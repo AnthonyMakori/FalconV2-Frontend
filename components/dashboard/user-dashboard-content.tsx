@@ -1,10 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState } from "react"
 import {
   Clock,
   Heart,
@@ -17,235 +13,171 @@ import {
   Plus,
   ChevronRight,
 } from "lucide-react"
-  import { useEffect, useState } from "react"
+
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
-// Mock data for recently watched
-const recentlyWatched = [
-  {
-    id: 1,
-    title: "The Lion King",
-    type: "Movie",
-    progress: 100,
-    thumbnail: "/placeholder.svg?height=120&width=200",
-    lastWatched: "2 hours ago",
-  },
-  {
-    id: 2,
-    title: "Queen of Katwe",
-    type: "Movie",
-    progress: 75,
-    thumbnail: "/placeholder.svg?height=120&width=200",
-    lastWatched: "Yesterday",
-  },
-  {
-    id: 3,
-    title: "Blood Diamond",
-    type: "Movie",
-    progress: 30,
-    thumbnail: "/placeholder.svg?height=120&width=200",
-    lastWatched: "3 days ago",
-  },
-]
-
-// Mock data for watchlist
-const watchlist = [
-  {
-    id: 1,
-    title: "Ngori Kuruka",
-    type: "Movie",
-    thumbnail: "/placeholder.svg?height=120&width=200",
-    addedOn: "2 days ago",
-  },
-  {
-    id: 2,
-    title: "Half of a Yellow Sun",
-    type: "Movie",
-    thumbnail: "/placeholder.svg?height=120&width=200",
-    addedOn: "1 week ago",
-  },
-  {
-    id: 3,
-    title: "The Boy Who Harnessed the Wind",
-    type: "Movie",
-    thumbnail: "/placeholder.svg?height=120&width=200",
-    addedOn: "2 weeks ago",
-  },
-]
-
-// Mock data for purchases
-const purchases = [
-  {
-    id: 1,
-    title: "Beast of No Nation",
-    type: "Movie",
-    amount: "KES 350",
-    date: "May 10, 2023",
-    thumbnail: "/placeholder.svg?height=60&width=100",
-  },
-  {
-    id: 2,
-    title: "Sarafina",
-    type: "Movie",
-    amount: "KES 350",
-    date: "April 28, 2023",
-    thumbnail: "/placeholder.svg?height=60&width=100",
-  },
-  {
-    id: 3,
-    title: "Premium Subscription",
-    type: "Subscription",
-    amount: "KES 1,200",
-    date: "April 1, 2023",
-    thumbnail: null,
-  },
-]
-
-
 export function UserDashboardContent() {
   const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [events, setEvents] = useState<any[]>([])
-  const [eventsLoading, setEventsLoading] = useState(true)
-  const [purchases, setPurchases] = useState<any[]>([])
-  const [totalSpent, setTotalSpent] = useState<number>(0)
-  const [purchasesLoading, setPurchasesLoading] = useState(true)
 
+  const [continueWatching, setContinueWatching] = useState<any[]>([])
+  const [watchHistory, setWatchHistory] = useState<any[]>([])
+  const [watchlist, setWatchlist] = useState<any[]>([])
+  const [events, setEvents] = useState<any[]>([])
+  const [purchases, setPurchases] = useState<any[]>([])
+
+  const [totalSpent, setTotalSpent] = useState(0)
+
+  const [loading, setLoading] = useState(true)
+  const [eventsLoading, setEventsLoading] = useState(true)
+  const [purchasesLoading, setPurchasesLoading] = useState(true)
 
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token")
       : null
 
+  const authHeaders = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+  }
+
+  /* ---------------- API CALLS ---------------- */
+
   const fetchUser = async () => {
+    const res = await fetch(`${API_URL}/me`, { headers: authHeaders })
+    if (!res.ok) throw new Error("User fetch failed")
+    setUser(await res.json())
+  }
+
+  const fetchWatchlist = async () => {
+    const res = await fetch(`${API_URL}/watchlist`, { headers: authHeaders })
+    if (!res.ok) throw new Error("Watchlist failed")
+    setWatchlist(await res.json())
+  }
+
+  const fetchContinueWatching = async () => {
+    const res = await fetch(`${API_URL}/watch-progress/continue`, {
+      headers: authHeaders,
+    })
+    if (!res.ok) throw new Error("Continue watching failed")
+    setContinueWatching(await res.json())
+  }
+
+  const fetchWatchHistory = async () => {
+    const res = await fetch(`${API_URL}/watch-history`, {
+      headers: authHeaders,
+    })
+    if (!res.ok) throw new Error("History failed")
+    setWatchHistory(await res.json())
+  }
+
+  const fetchPurchases = async () => {
     try {
-      const res = await fetch(`${API_URL}/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
+      const res = await fetch(`${API_URL}/purchases`, {
+        headers: authHeaders,
       })
-
-      if (!res.ok) throw new Error("Failed to fetch user")
-
-      const data = await res.json()
-      setUser(data)
-    } catch (error) {
-      console.error(error)
+      if (!res.ok) throw new Error()
+      setPurchases(await res.json())
     } finally {
-      setLoading(false)
+      setPurchasesLoading(false)
     }
   }
 
- const fetchEvents = async () => {
-  try {
-    const res = await fetch(`${API_URL}/events`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    })
-
-    if (!res.ok) throw new Error("Failed to fetch events")
-
-    const data = await res.json()
-
-    setEvents(Array.isArray(data) ? data : [data])
-  } catch (error) {
-    console.error(error)
-    setEvents([])
-  } finally {
-    setEventsLoading(false)
-  }
-}
-
-const fetchPurchases = async () => {
-  try {
-    const res = await fetch(`${API_URL}/purchases`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    })
-
-    if (!res.ok) throw new Error("Failed to fetch purchases")
-
-    const data = await res.json()
-    setPurchases(data)
-  } catch (error) {
-    console.error(error)
-    setPurchases([])
-  } finally {
-    setPurchasesLoading(false)
-  }
-}
-
-const fetchPurchaseSummary = async () => {
-  try {
+  const fetchPurchaseSummary = async () => {
     const res = await fetch(`${API_URL}/purchases/summary`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+      headers: authHeaders,
     })
-
-    if (!res.ok) throw new Error("Failed to fetch summary")
-
+    if (!res.ok) throw new Error()
     const data = await res.json()
     setTotalSpent(data.total_spent)
-  } catch (error) {
-    console.error(error)
   }
-}
 
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch(`${API_URL}/events`, {
+        headers: authHeaders,
+      })
+      if (!res.ok) throw new Error()
+      setEvents(await res.json())
+    } finally {
+      setEventsLoading(false)
+    }
+  }
+
+  const removeFromWatchlist = async (movieId: number) => {
+    await fetch(`${API_URL}/watchlist/${movieId}`, {
+      method: "DELETE",
+      headers: authHeaders,
+    })
+    fetchWatchlist()
+  }
+
+  /* ---------------- EFFECT ---------------- */
 
   useEffect(() => {
-    fetchUser()
-      fetchEvents()
-       fetchPurchases()
-        fetchPurchaseSummary()
+    if (!token) return
+
+    Promise.all([
+      fetchUser(),
+      fetchWatchlist(),
+      fetchContinueWatching(),
+      fetchWatchHistory(),
+      fetchPurchases(),
+      fetchPurchaseSummary(),
+      fetchEvents(),
+    ])
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
-  if (loading) {
-    return <div className="p-6">Loading dashboard...</div>
-  }
+  if (loading) return <div className="p-6">Loading dashboard...</div>
+  if (!user) return <div className="p-6 text-red-500">Failed to load user</div>
 
-  if (!user) {
-    return <div className="p-6 text-red-500">Failed to load user</div>
-  }
-
+  /* ---------------- UI ---------------- */
 
   return (
     <div>
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage
-              src={user.avatar || "/placeholder.svg"}
-              alt={user.name}
-            />
+            <AvatarImage src={user.avatar || "/placeholder.svg"} />
             <AvatarFallback>
               {user.name?.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
+
           <div>
             <h1 className="text-2xl font-bold">{user.name}</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>
-              Member since{" "}
-              {new Date(user.created_at).toLocaleDateString()}
-            </span>
-            <span>•</span>
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/20"
-            >
-              {user.subscription_plan ?? "Free"}
-            </Badge>
-          </div>
+              <span>
+                Member since{" "}
+                {new Date(user.created_at).toLocaleDateString()}
+              </span>
+              <span>•</span>
+              <Badge
+                variant="outline"
+                className="bg-primary/10 text-primary"
+              >
+                {user.subscription_plan ?? "Free"}
+              </Badge>
+            </div>
           </div>
         </div>
+
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
             <Bell className="h-4 w-4 mr-2" />
@@ -258,6 +190,7 @@ const fetchPurchaseSummary = async () => {
         </div>
       </div>
 
+      {/* TABS */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -265,329 +198,156 @@ const fetchPurchaseSummary = async () => {
           <TabsTrigger value="history">Watch History</TabsTrigger>
           <TabsTrigger value="purchases">Purchases</TabsTrigger>
         </TabsList>
+
+        {/* OVERVIEW */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Watch History</CardTitle>
+                <CardTitle className="text-sm">Watch History</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">12</div>
-                <p className="text-xs text-muted-foreground">Movies watched this month</p>
+                <div className="text-2xl font-bold">
+                  {watchHistory.length}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Movies watched
+                </p>
               </CardContent>
-              <CardFooter>
-                <Button variant="ghost" size="sm" className="w-full">
-                  <Clock className="h-4 w-4 mr-2" />
-                  View History
-                </Button>
-              </CardFooter>
             </Card>
+
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Watchlist</CardTitle>
+                <CardTitle className="text-sm">Watchlist</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8</div>
-                <p className="text-xs text-muted-foreground">Items in your watchlist</p>
+                <div className="text-2xl font-bold">
+                  {watchlist.length}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Saved movies
+                </p>
               </CardContent>
-              <CardFooter>
-                <Button variant="ghost" size="sm" className="w-full">
-                  <Heart className="h-4 w-4 mr-2" />
-                  View Watchlist
-                </Button>
-              </CardFooter>
             </Card>
+
             <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Purchases</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                KES {totalSpent.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">Total spent this month</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="ghost" size="sm" className="w-full">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                View Purchases
-              </Button>
-            </CardFooter>
-          </Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Purchases</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  KES {totalSpent.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total spent
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Continue Watching</CardTitle>
-                  <CardDescription>Pick up where you left off</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentlyWatched.map((item) => (
-                      <div key={item.id} className="flex gap-4">
-                        <div className="relative w-[120px] h-[68px] rounded-md overflow-hidden">
-                          <img
-                            src={item.thumbnail || "/placeholder.svg"}
-                            alt={item.title}
-                            className="object-cover w-full h-full"
-                          />
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="text-white">
-                              <Play className="h-8 w-8" />
-                            </Button>
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
-                            <div className="h-full bg-primary" style={{ width: `${item.progress}%` }} />
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{item.title}</h4>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Badge variant="outline" className="mr-2">
-                              {item.type}
-                            </Badge>
-                            <span>{item.lastWatched}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+          {/* CONTINUE WATCHING */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Continue Watching</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {continueWatching.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Nothing to continue
+                </p>
+              )}
+
+              {continueWatching.map((item) => (
+                <div key={item.id} className="flex gap-4">
+                  <div className="relative w-[120px] h-[68px] overflow-hidden rounded">
+                    <img src={item.thumbnail} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 h-1 w-full bg-gray-700">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    View All History
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-            <div>
-              <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Events</CardTitle>
-                <CardDescription>Events you might be interested in</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {eventsLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading events...</p>
-                  ) : events.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No upcoming events</p>
-                  ) : (
-                    events.map((event) => (
-                    <div
-                      key={`event-${event.id}-${event.created_at}`}
-                      className="border-b pb-3 last:border-0 last:pb-0"
-                    >
-                        <h4 className="font-medium">{event.title}</h4>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          <span>
-                            {new Date(event.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {event.location}
-                        </div>
-                      </div>
-                    ))
-                  )}
+                  <div>
+                    <h4 className="font-medium">{item.title}</h4>
+                    <span className="text-sm text-muted-foreground">
+                      {item.lastWatched}
+                    </span>
+                  </div>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View All Events
-                </Button>
-              </CardFooter>
-            </Card>
-            </div>
-          </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
-        <TabsContent value="watchlist" className="space-y-4">
+
+        {/* WATCHLIST */}
+        <TabsContent value="watchlist">
           <Card>
             <CardHeader>
               <CardTitle>Your Watchlist</CardTitle>
-              <CardDescription>Movies and series you want to watch</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {watchlist.map((item) => (
-                  <div key={item.id} className="border rounded-lg overflow-hidden">
-                    <div className="relative aspect-video">
-                      <img
-                        src={item.thumbnail || "/placeholder.svg"}
-                        alt={item.title}
-                        className="object-cover w-full h-full"
-                      />
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="secondary">
-                            <Play className="h-4 w-4 mr-1" />
-                            Watch
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-white border-white">
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <h4 className="font-medium truncate">{item.title}</h4>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <Badge variant="outline">{item.type}</Badge>
-                        <span>Added {item.addedOn}</span>
-                      </div>
-                    </div>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {watchlist.map((item) => (
+                <div key={item.id} className="border rounded overflow-hidden">
+                  <img src={item.thumbnail} className="w-full aspect-video object-cover" />
+                  <div className="p-3">
+                    <h4 className="font-medium">{item.title}</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromWatchlist(item.movie_id)}
+                    >
+                      Remove
+                    </Button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Browse Movies
-              </Button>
-              <Button variant="outline">
-                View All
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
-        <TabsContent value="history" className="space-y-4">
+
+        {/* HISTORY */}
+        <TabsContent value="history">
           <Card>
             <CardHeader>
               <CardTitle>Watch History</CardTitle>
-              <CardDescription>Movies and series you've watched</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentlyWatched.map((item) => (
-                  <div key={item.id} className="flex gap-4 border-b pb-4 last:border-0 last:pb-0">
-                    <div className="relative w-[120px] h-[68px] rounded-md overflow-hidden">
-                      <img
-                        src={item.thumbnail || "/placeholder.svg"}
-                        alt={item.title}
-                        className="object-cover w-full h-full"
-                      />
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <Button size="icon" variant="ghost" className="text-white">
-                          <Play className="h-8 w-8" />
-                        </Button>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
-                        <div className="h-full bg-primary" style={{ width: `${item.progress}%` }} />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{item.title}</h4>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Badge variant="outline" className="mr-2">
-                          {item.type}
-                        </Badge>
-                        <span>Watched {item.lastWatched}</span>
-                      </div>
-                      {item.progress < 100 && (
-                        <Button variant="link" size="sm" className="px-0 h-auto">
-                          Continue watching
-                        </Button>
-                      )}
-                    </div>
-                    <div>
-                      <Button variant="ghost" size="sm">
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="space-y-4">
+              {watchHistory.map((item) => (
+                <div key={item.id} className="border-b pb-4">
+                  <h4 className="font-medium">{item.movie.title}</h4>
+                  <span className="text-sm text-muted-foreground">
+                    Watched{" "}
+                    {new Date(item.last_watched_at).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
             </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                View Complete History
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
-       <TabsContent value="purchases" className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Purchases</CardTitle>
-            <CardDescription>Movies, series, and subscriptions you've purchased</CardDescription>
-          </CardHeader>
 
-          <CardContent>
-            <div className="space-y-4">
+        {/* PURCHASES */}
+        <TabsContent value="purchases">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Purchases</CardTitle>
+            </CardHeader>
+            <CardContent>
               {purchasesLoading ? (
-                <p className="text-sm text-muted-foreground">Loading purchases...</p>
+                <p>Loading...</p>
               ) : purchases.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No purchases yet</p>
+                <p>No purchases</p>
               ) : (
                 purchases.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex gap-4 border-b pb-4 last:border-0 last:pb-0"
-                  >
-                    {item.thumbnail ? (
-                      <div className="relative w-[100px] h-[60px] rounded-md overflow-hidden">
-                        <img
-                          src={item.thumbnail || "/placeholder.svg"}
-                          alt={item.title || `Movie ${item.movie_id}`}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center w-[100px] h-[60px] bg-muted rounded-md">
-                        <CreditCard className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )}
-
-                    <div className="flex-1">
-                      <h4 className="font-medium">
-                        {item.title ? item.title : `Movie ID: ${item.movie_id}`}
-                      </h4>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        {item.type && (
-                          <Badge variant="outline" className="mr-2">
-                            {item.type}
-                          </Badge>
-                        )}
-                        <span>
-                          Purchased on{" "}
-                          {new Date(item.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="font-medium">
-                        KES {Number(item.amount).toLocaleString()}
-                      </div>
-                      {item.type !== "Subscription" && (
-                        <Button variant="link" size="sm" className="px-0 h-auto">
-                          Watch now
-                        </Button>
-                      )}
-                    </div>
+                  <div key={item.id} className="flex justify-between border-b py-3">
+                    <span>{item.title ?? `Movie #${item.movie_id}`}</span>
+                    <span>KES {Number(item.amount).toLocaleString()}</span>
                   </div>
                 ))
               )}
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex justify-between">
-            <Button variant="outline">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Payment Methods
-            </Button>
-            <Button variant="outline">
-              View All Transactions
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          </CardFooter>
-        </Card>
-      </TabsContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   )
