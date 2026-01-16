@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -122,37 +121,10 @@ const upcomingEvents = [
 export function UserDashboardContent() {
   const { data: session } = useSession()
 
-  const [authUser, setAuthUser] = useState(session?.user ?? null)
-
-  useEffect(() => {
-    // If session from `useSession` is populated use it, otherwise try server endpoint as a fallback
-    if (session && Object.keys(session).length > 0 && (session as any).user) {
-      setAuthUser((session as any).user)
-      return
-    }
-
-    let mounted = true
-    ;(async () => {
-      try {
-        const res = await fetch("/api/auth/session")
-        if (!mounted) return
-        if (!res.ok) return
-        const data = await res.json()
-        if (data && data.user) setAuthUser(data.user)
-      } catch (e) {
-        // ignore
-      }
-    })()
-
-    return () => {
-      mounted = false
-    }
-  }, [session])
-
   const user = {
-    name: authUser?.name ?? "John Doe",
-    email: authUser?.email ?? "john@example.com",
-    avatar: authUser?.image ?? "/placeholder.svg?height=40&width=40",
+    name: session?.user?.name ?? "John Doe",
+    email: session?.user?.email ?? "john@example.com",
+    avatar: session?.user?.image ?? "/placeholder.svg?height=40&width=40",
     memberSince: "Jan 2023",
     plan: "Premium",
   }
