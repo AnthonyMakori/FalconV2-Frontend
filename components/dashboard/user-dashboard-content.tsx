@@ -17,15 +17,9 @@ import {
   Plus,
   ChevronRight,
 } from "lucide-react"
+import { useSession } from "next-auth/react"
 
-// Mock data for user
-const user = {
-  name: "John Doe",
-  email: "john@example.com",
-  avatar: "/placeholder.svg?height=40&width=40",
-  memberSince: "Jan 2023",
-  plan: "Premium",
-}
+// Mock data kept as fallbacks; actual values are derived from session
 
 // Mock data for recently watched
 const recentlyWatched = [
@@ -125,6 +119,16 @@ const upcomingEvents = [
 ]
 
 export function UserDashboardContent() {
+  const { data: session } = useSession()
+
+  const user = {
+    name: session?.user?.name ?? "John Doe",
+    email: session?.user?.email ?? "john@example.com",
+    avatar: session?.user?.image ?? "/placeholder.svg?height=40&width=40",
+    memberSince: "Jan 2023",
+    plan: "Premium",
+  }
+
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between mb-8">
