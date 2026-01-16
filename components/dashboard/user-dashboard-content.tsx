@@ -17,9 +17,9 @@ import {
   Plus,
   ChevronRight,
 } from "lucide-react"
-import { useSession } from "next-auth/react"
+  import { useEffect, useState } from "react"
 
-// Mock data kept as fallbacks; actual values are derived from session
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 // Mock data for recently watched
 const recentlyWatched = [
@@ -102,50 +102,102 @@ const purchases = [
   },
 ]
 
-// Mock data for upcoming events
-const upcomingEvents = [
-  {
-    id: 1,
-    title: "African Film Festival",
-    date: "June 15, 2023",
-    location: "Nairobi, Kenya",
-  },
-  {
-    id: 2,
-    title: "New Release: Coming Home",
-    date: "May 20, 2023",
-    location: "Online Premiere",
-  },
-]
 
 export function UserDashboardContent() {
-  const { data: session } = useSession()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [events, setEvents] = useState<any[]>([])
+  const [eventsLoading, setEventsLoading] = useState(true)
 
-  const user = {
-    name: session?.user?.name ?? "John Doe",
-    email: session?.user?.email ?? "john@example.com",
-    avatar: session?.user?.image ?? "/placeholder.svg?height=40&width=40",
-    memberSince: "Jan 2023",
-    plan: "Premium",
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch(`${API_URL}/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      })
+
+      if (!res.ok) throw new Error("Failed to fetch user")
+
+      const data = await res.json()
+      setUser(data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
   }
+
+ const fetchEvents = async () => {
+  try {
+    const res = await fetch(`${API_URL}/events`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    })
+
+    if (!res.ok) throw new Error("Failed to fetch events")
+
+    const data = await res.json()
+
+    setEvents(Array.isArray(data) ? data : [data])
+  } catch (error) {
+    console.error(error)
+    setEvents([])
+  } finally {
+    setEventsLoading(false)
+  }
+}
+
+  useEffect(() => {
+    fetchUser()
+      fetchEvents()
+  }, [])
+
+  if (loading) {
+    return <div className="p-6">Loading dashboard...</div>
+  }
+
+  if (!user) {
+    return <div className="p-6 text-red-500">Failed to load user</div>
+  }
+
 
   return (
     <div>
       <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-            <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage
+              src={user.avatar || "/placeholder.svg"}
+              alt={user.name}
+            />
+            <AvatarFallback>
+              {user.name?.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">{user.name}</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Member since {user.memberSince}</span>
-              <span>•</span>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                {user.plan}
-              </Badge>
-            </div>
+            <span>
+              Member since{" "}
+              {new Date(user.created_at).toLocaleDateString()}
+            </span>
+            <span>•</span>
+            <Badge
+              variant="outline"
+              className="bg-primary/10 text-primary border-primary/20"
+            >
+              {user.subscription_plan ?? "Free"}
+            </Badge>
+          </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -264,30 +316,43 @@ export function UserDashboardContent() {
             </div>
             <div>
               <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Events</CardTitle>
-                  <CardDescription>Events you might be interested in</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {upcomingEvents.map((event) => (
-                      <div key={event.id} className="border-b pb-3 last:border-0 last:pb-0">
+              <CardHeader>
+                <CardTitle>Upcoming Events</CardTitle>
+                <CardDescription>Events you might be interested in</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {eventsLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading events...</p>
+                  ) : events.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No upcoming events</p>
+                  ) : (
+                    events.map((event) => (
+                    <div
+                      key={`event-${event.id}-${event.created_at}`}
+                      className="border-b pb-3 last:border-0 last:pb-0"
+                    >
                         <h4 className="font-medium">{event.title}</h4>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3 mr-1" />
-                          <span>{event.date}</span>
+                          <span>
+                            {new Date(event.date).toLocaleDateString()}
+                          </span>
                         </div>
-                        <div className="text-sm text-muted-foreground">{event.location}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {event.location}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    View All Events
-                  </Button>
-                </CardFooter>
-              </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" className="w-full">
+                  View All Events
+                </Button>
+              </CardFooter>
+            </Card>
             </div>
           </div>
         </TabsContent>
