@@ -45,11 +45,11 @@ export function AdminDashboardContent() {
       try {
         const [statsData, uploadsData, activitiesData, viewsChartData, revenueChartData] =
           await Promise.all([
-            authFetch(`${API_URL}/api/dashboard/stats`),
-            authFetch(`${API_URL}/api/dashboard/recent-uploads`),
-            authFetch(`${API_URL}/api/dashboard/recent-activities`),
-            authFetch(`${API_URL}/api/dashboard/views-overview`),
-            authFetch(`${API_URL}/api/dashboard/revenue-overview`),
+            authFetch(`${API_URL}/dashboard/stats`),
+            authFetch(`${API_URL}/dashboard/recent-uploads`),
+            authFetch(`${API_URL}/dashboard/recent-activities`),
+            authFetch(`${API_URL}/dashboard/views-overview`),
+            authFetch(`${API_URL}/dashboard/revenue-overview`),
           ])
 
         setStats(statsData)
