@@ -17,6 +17,7 @@ import {
 } from "recharts"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
+const ITEMS_PER_PAGE = 6
 
 export function AdminDashboardContent() {
   const [stats, setStats] = useState<any>(null)
@@ -25,7 +26,10 @@ export function AdminDashboardContent() {
   const [viewsData, setViewsData] = useState<any[]>([])
   const [revenueData, setRevenueData] = useState<any[]>([])
 
-  // Helper function for authorized fetch
+  // Pagination states
+  const [uploadsPage, setUploadsPage] = useState(1)
+  const [activitiesPage, setActivitiesPage] = useState(1)
+
   const authFetch = async (url: string) => {
     const token = localStorage.getItem("token") 
     if (!token) throw new Error("No auth token found")
@@ -66,6 +70,26 @@ export function AdminDashboardContent() {
   }, [])
 
   if (!stats) return <p>Loading dashboard...</p>
+
+  // Combine uploads and activities into single arrays
+  const allUploads = recentUploads
+    ? [...recentUploads.movies, ...recentUploads.events, ...recentUploads.merchandises]
+    : []
+
+  const allActivities = recentActivities
+    ? [...recentActivities.recentUsers, ...recentActivities.recentPurchases]
+    : []
+
+  // Pagination slices
+  const uploadsSlice = allUploads.slice(
+    (uploadsPage - 1) * ITEMS_PER_PAGE,
+    uploadsPage * ITEMS_PER_PAGE
+  )
+
+  const activitiesSlice = allActivities.slice(
+    (activitiesPage - 1) * ITEMS_PER_PAGE,
+    activitiesPage * ITEMS_PER_PAGE
+  )
 
   return (
     <div className="space-y-6">
@@ -161,27 +185,42 @@ export function AdminDashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentUploads &&
-                [...recentUploads.movies, ...recentUploads.events, ...recentUploads.merchandises].map(
-                  (item: any, index: number) => (
-                    <div key={index} className="flex items-center gap-4">
-                      <div
-                        className="h-12 w-20 bg-muted rounded-md"
-                        style={{
-                          backgroundImage: `url(${API_URL}/storage/${item.thumbnail})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      ></div>
-                      <div>
-                        <h4 className="text-sm font-medium">{item.title || item.name}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          Uploaded {new Date(item.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                )}
+              {uploadsSlice.map((item: any, index: number) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div
+                    className="h-12 w-20 bg-muted rounded-md"
+                    style={{
+                      backgroundImage: `url(${API_URL}/storage/${item.thumbnail})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  ></div>
+                  <div>
+                    <h4 className="text-sm font-medium">{item.title || item.name}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Uploaded {new Date(item.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Buttons */}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                disabled={uploadsPage === 1}
+                onClick={() => setUploadsPage((prev) => prev - 1)}
+              >
+                Previous
+              </button>
+              <button
+                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                disabled={uploadsPage * ITEMS_PER_PAGE >= allUploads.length}
+                onClick={() => setUploadsPage((prev) => prev + 1)}
+              >
+                Next
+              </button>
             </div>
           </CardContent>
         </Card>
@@ -193,30 +232,43 @@ export function AdminDashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities &&
-                [...recentActivities.recentUsers, ...recentActivities.recentPurchases].map(
-                  (activity: any, index: number) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                        {activity.name?.charAt(0) || activity.user_id}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium">
-                          {activity.name
-                            ? "User Registration"
-                            : "Purchase Received"}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">
-                          {activity.name
-                            ? `New user registered on ${new Date(activity.created_at).toLocaleDateString()}`
-                            : `KES ${activity.amount} purchase by user ${activity.user_id} on ${new Date(
-                                activity.created_at
-                              ).toLocaleDateString()}`}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                )}
+              {activitiesSlice.map((activity: any, index: number) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                    {activity.name?.charAt(0) || activity.user_id}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">
+                      {activity.name ? "User Registration" : "Purchase Received"}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.name
+                        ? `New user registered on ${new Date(activity.created_at).toLocaleDateString()}`
+                        : `KES ${activity.amount} purchase by user ${activity.user_id} on ${new Date(
+                            activity.created_at
+                          ).toLocaleDateString()}`}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Buttons */}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                disabled={activitiesPage === 1}
+                onClick={() => setActivitiesPage((prev) => prev - 1)}
+              >
+                Previous
+              </button>
+              <button
+                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                disabled={activitiesPage * ITEMS_PER_PAGE >= allActivities.length}
+                onClick={() => setActivitiesPage((prev) => prev + 1)}
+              >
+                Next
+              </button>
             </div>
           </CardContent>
         </Card>
