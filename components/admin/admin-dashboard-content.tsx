@@ -27,27 +27,27 @@ export function AdminDashboardContent() {
 
   useEffect(() => {
     // Fetch dashboard stats
-    fetch(`${API_URL}/api/dashboard/stats`)
+    fetch(`${API_URL}/dashboard/stats`)
       .then(res => res.json())
       .then(setStats)
 
     // Fetch recent uploads
-    fetch(`${API_URL}/api/dashboard/recent-uploads`)
+    fetch(`${API_URL}/dashboard/recent-uploads`)
       .then(res => res.json())
       .then(setRecentUploads)
 
     // Fetch recent activities
-    fetch(`${API_URL}/api/dashboard/recent-activities`)
+    fetch(`${API_URL}/dashboard/recent-activities`)
       .then(res => res.json())
       .then(setRecentActivities)
 
     // Fetch views overview
-    fetch(`${API_URL}/api/dashboard/views-overview`)
+    fetch(`${API_URL}/dashboard/views-overview`)
       .then(res => res.json())
       .then(setViewsData)
 
     // Fetch revenue overview
-    fetch(`${API_URL}/api/dashboard/revenue-overview`)
+    fetch(`${API_URL}/dashboard/revenue-overview`)
       .then(res => res.json())
       .then(setRevenueData)
   }, [])
