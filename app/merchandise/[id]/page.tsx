@@ -18,6 +18,8 @@ type Merchandise = {
   description: string
   price?: number
   image: string
+  image_url: string
+
 }
 
 export default function MerchandiseDetailsPage({
@@ -63,12 +65,12 @@ export default function MerchandiseDetailsPage({
       {/* Hero */}
       <div className="relative h-[45vh] overflow-hidden">
         <Image
-          src={item.image}
+          src={item.image_url || `${API_URL}/storage/${item.image}`}
           alt={item.name}
           fill
           className="object-cover"
-          priority
         />
+
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
 
         <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -101,11 +103,12 @@ export default function MerchandiseDetailsPage({
           <div className="lg:col-span-1">
             <div className="relative aspect-square rounded-xl overflow-hidden shadow-lg">
               <Image
-                src={item.image}
-                alt={item.name}
-                fill
-                className="object-contain"
-              />
+                  src={item.image_url || `${API_URL}/storage/${item.image}`}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                />
+
             </div>
           </div>
 
