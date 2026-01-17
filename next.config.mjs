@@ -12,8 +12,8 @@ const nextConfig = {
 
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "127.0.0.1",
+        protocol: "https",
+        hostname: "api.falconeyephilmz.com",
         port: "8000",
         pathname: "/assets/**",
       },

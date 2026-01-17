@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import BuyModal from "@/components/EventBuyModal"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
+const IMAGE_BASE_URL = "https://api.falconeyephilmz.com"
 
 type Event = {
   id: number
@@ -40,7 +41,14 @@ export default function EventsPage() {
         const json = await res.json()
 
         if (json?.data && Array.isArray(json.data)) {
-          setEvents(json.data)
+          const normalizedEvents = json.data.map((event: Event) => ({
+            ...event,
+            poster: event.poster.startsWith("http")
+              ? event.poster
+              : `${IMAGE_BASE_URL}/${event.poster}`,
+          }))
+
+          setEvents(normalizedEvents)
         } else {
           setEvents([])
         }
@@ -78,66 +86,58 @@ export default function EventsPage() {
 
       {!loading && !error && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 w-full">
-          {events.map((event) => {
-            // 🔥 Ensure poster is always a full URL
-            const posterUrl = event.poster.startsWith("http")
-              ? event.poster
-              : `${API_URL}/${event.poster}`
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="group rounded-2xl border bg-background overflow-hidden hover:shadow-xl transition flex flex-col h-[480px]"
+            >
+              {/* Poster */}
+              <div className="relative flex-1 overflow-hidden">
+                <Image
+                  src={event.poster}
+                  alt={event.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
 
-            return (
-              <div
-                key={event.id}
-                className="group rounded-2xl border bg-background overflow-hidden hover:shadow-xl transition flex flex-col h-[480px]"
-              >
-                {/* Poster */}
-                <div className="relative flex-1 overflow-hidden">
-                  <Image
-                    src={posterUrl}
-                    alt={event.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    priority={false}
-                  />
-
-                  {/* Event Name Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm p-4">
-                    <h3 className="text-white font-semibold text-lg text-center">
-                      {event.name}
-                    </h3>
-                  </div>
-
-                  {event.price && (
-                    <Badge className="absolute top-4 right-4 text-sm">
-                      KES {parseFloat(event.price).toLocaleString()}
-                    </Badge>
-                  )}
+                {/* Event Name Overlay */}
+                <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm p-4">
+                  <h3 className="text-white font-semibold text-lg text-center">
+                    {event.name}
+                  </h3>
                 </div>
 
-                {/* Buttons */}
-                <div className="p-6 flex gap-3">
-                  <Button
-                    className="w-full"
-                    onClick={() => router.push(`/events/${event.id}`)}
-                  >
-                    View
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      setSelectedEvent(event)
-                      setIsModalOpen(true)
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Buy Ticket
-                  </Button>
-                </div>
+                {event.price && (
+                  <Badge className="absolute top-4 right-4 text-sm">
+                    KES {parseFloat(event.price).toLocaleString()}
+                  </Badge>
+                )}
               </div>
-            )
-          })}
+
+              {/* Buttons */}
+              <div className="p-6 flex gap-3">
+                <Button
+                  className="w-full"
+                  onClick={() => router.push(`/events/${event.id}`)}
+                >
+                  View
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedEvent(event)
+                    setIsModalOpen(true)
+                  }}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Buy Ticket
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
