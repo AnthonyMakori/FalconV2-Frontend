@@ -84,19 +84,19 @@ export default function EventsPage() {
     loadEvents()
   }, [])
 
-  const loadEvents = async () => {
-    setLoading(true)
-    setError("")
-    try {
-      const res = await apiFetch(`${API_URL}/events`)
-      // Safely set events array
-      setEvents(res?.data?.data || [])
-    } catch (err: any) {
-      setError(err?.message || "Failed to load events")
-    } finally {
-      setLoading(false)
+    const loadEvents = async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const res = await apiFetch(`${API_URL}/events`)
+        setEvents(res?.data || [])
+      } catch (err: any) {
+        setError(err?.message || "Failed to load events")
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
 
   const saveEvent = async () => {
     if (!form.name || !form.location || !form.date || !form.type || !form.price) {
