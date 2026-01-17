@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   BarChart,
@@ -25,31 +25,44 @@ export function AdminDashboardContent() {
   const [viewsData, setViewsData] = useState<any[]>([])
   const [revenueData, setRevenueData] = useState<any[]>([])
 
+  // Helper function for authorized fetch
+  const authFetch = async (url: string) => {
+    const token = localStorage.getItem("token") 
+    if (!token) throw new Error("No auth token found")
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+    if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`)
+    return res.json()
+  }
+
   useEffect(() => {
-    // Fetch dashboard stats
-    fetch(`${API_URL}/dashboard/stats`)
-      .then(res => res.json())
-      .then(setStats)
+    const fetchData = async () => {
+      try {
+        const [statsData, uploadsData, activitiesData, viewsChartData, revenueChartData] =
+          await Promise.all([
+            authFetch(`${API_URL}/api/dashboard/stats`),
+            authFetch(`${API_URL}/api/dashboard/recent-uploads`),
+            authFetch(`${API_URL}/api/dashboard/recent-activities`),
+            authFetch(`${API_URL}/api/dashboard/views-overview`),
+            authFetch(`${API_URL}/api/dashboard/revenue-overview`),
+          ])
 
-    // Fetch recent uploads
-    fetch(`${API_URL}/dashboard/recent-uploads`)
-      .then(res => res.json())
-      .then(setRecentUploads)
+        setStats(statsData)
+        setRecentUploads(uploadsData)
+        setRecentActivities(activitiesData)
+        setViewsData(viewsChartData)
+        setRevenueData(revenueChartData)
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error)
+      }
+    }
 
-    // Fetch recent activities
-    fetch(`${API_URL}/dashboard/recent-activities`)
-      .then(res => res.json())
-      .then(setRecentActivities)
-
-    // Fetch views overview
-    fetch(`${API_URL}/dashboard/views-overview`)
-      .then(res => res.json())
-      .then(setViewsData)
-
-    // Fetch revenue overview
-    fetch(`${API_URL}/dashboard/revenue-overview`)
-      .then(res => res.json())
-      .then(setRevenueData)
+    fetchData()
   }, [])
 
   if (!stats) return <p>Loading dashboard...</p>
