@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, FormEvent } from "react"
+import { useEffect, useState } from "react"
 import { apiFetch } from "@/utils/api"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,7 +36,6 @@ import { Plus, MoreHorizontal, Trash } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
-
 type EventType = {
   id: number
   name: string
@@ -44,7 +43,7 @@ type EventType = {
   date: string
   type: string
   status: string
-  price: number
+  price: string | number
   description?: string | null
   poster?: string | null
 }
@@ -55,7 +54,16 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string
+    location: string
+    date: string
+    type: string
+    status: string
+    price: string
+    description: string
+    poster: File | null
+  }>({
     name: "",
     location: "",
     date: "",
@@ -63,9 +71,10 @@ export default function EventsPage() {
     status: "Upcoming",
     price: "",
     description: "",
-    poster: null as File | null,
+    poster: null,
   })
 
+  // Load events on component mount
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) {
@@ -80,18 +89,23 @@ export default function EventsPage() {
     setError("")
     try {
       const res = await apiFetch(`${API_URL}/events`)
-      setEvents(res.data.data)
+      // Safely set events array
+      setEvents(res?.data?.data || [])
     } catch (err: any) {
-      setError(err.message || "Failed to load events")
+      setError(err?.message || "Failed to load events")
     } finally {
       setLoading(false)
     }
   }
 
   const saveEvent = async () => {
+    if (!form.name || !form.location || !form.date || !form.type || !form.price) {
+      setError("Please fill all required fields")
+      return
+    }
+
     setLoading(true)
     setError("")
-
     try {
       const formData = new FormData()
       formData.append("name", form.name)
@@ -103,11 +117,6 @@ export default function EventsPage() {
       formData.append("description", form.description)
       if (form.poster) formData.append("poster", form.poster)
 
-      console.log("Submitting event:", form)
-      for (const pair of formData.entries()) {
-        console.log("FormData ->", pair[0], pair[1])
-      }
-
       await apiFetch(`${API_URL}/events`, {
         method: "POST",
         headers: {
@@ -116,6 +125,7 @@ export default function EventsPage() {
         body: formData,
       })
 
+      // Reset form
       setForm({ name: "", location: "", date: "", type: "", status: "Upcoming", price: "", description: "", poster: null })
 
       const fileInput = document.querySelector<HTMLInputElement>("input[type='file']")
@@ -124,7 +134,7 @@ export default function EventsPage() {
       setOpen(false)
       loadEvents()
     } catch (err: any) {
-      setError(err.message || "Failed to save event")
+      setError(err?.message || "Failed to save event")
       console.error("API Error:", err)
     } finally {
       setLoading(false)
@@ -132,13 +142,14 @@ export default function EventsPage() {
   }
 
   const deleteEvent = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this event?")) return
     setLoading(true)
     setError("")
     try {
       await apiFetch(`${API_URL}/events/${id}`, { method: "DELETE" })
       loadEvents()
     } catch (err: any) {
-      setError(err.message || "Failed to delete event")
+      setError(err?.message || "Failed to delete event")
     } finally {
       setLoading(false)
     }
@@ -153,7 +164,9 @@ export default function EventsPage() {
         </Button>
       </div>
 
-      {error && <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
+      {error && (
+        <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>
+      )}
 
       <Card>
         <CardHeader>
@@ -184,7 +197,7 @@ export default function EventsPage() {
                     Loading events...
                   </TableCell>
                 </TableRow>
-              ) : events.length === 0 ? (
+              ) : events?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground">
                     No events found
@@ -194,11 +207,17 @@ export default function EventsPage() {
                 events.map(event => (
                   <TableRow key={event.id}>
                     <TableCell>
-                      {event.poster && <img src={event.poster} alt={event.name} className="h-10 w-10 rounded object-cover" />}
+                      {event.poster && (
+                        <img
+                          src={event.poster}
+                          alt={event.name}
+                          className="h-10 w-10 rounded object-cover"
+                        />
+                      )}
                     </TableCell>
                     <TableCell className="font-medium">{event.name}</TableCell>
                     <TableCell>{event.location}</TableCell>
-                    <TableCell>{event.date}</TableCell>
+                    <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
                     <TableCell>{event.type}</TableCell>
                     <TableCell>{event.status}</TableCell>
                     <TableCell>{event.price}</TableCell>
@@ -229,6 +248,7 @@ export default function EventsPage() {
         </CardContent>
       </Card>
 
+      {/* Add Event Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -236,11 +256,32 @@ export default function EventsPage() {
           </DialogHeader>
 
           <div className="space-y-3">
-            <Input placeholder="Event Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-            <Input placeholder="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-            <Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
-            <Input placeholder="Type (Festival, Workshop…)" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} />
-            <Input placeholder="Price" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+            <Input
+              placeholder="Event Name"
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+            />
+            <Input
+              placeholder="Location"
+              value={form.location}
+              onChange={e => setForm({ ...form, location: e.target.value })}
+            />
+            <Input
+              type="date"
+              value={form.date}
+              onChange={e => setForm({ ...form, date: e.target.value })}
+            />
+            <Input
+              placeholder="Type (Festival, Workshop…)"
+              value={form.type}
+              onChange={e => setForm({ ...form, type: e.target.value })}
+            />
+            <Input
+              placeholder="Price"
+              type="number"
+              value={form.price}
+              onChange={e => setForm({ ...form, price: e.target.value })}
+            />
             <textarea
               placeholder="Description (optional)"
               value={form.description}
@@ -253,7 +294,11 @@ export default function EventsPage() {
               className="w-full border rounded-md px-3 py-2 text-sm"
               onChange={e => setForm({ ...form, poster: e.target.files?.[0] || null })}
             />
-            <select className="w-full border rounded-md px-3 py-2" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+            <select
+              className="w-full border rounded-md px-3 py-2"
+              value={form.status}
+              onChange={e => setForm({ ...form, status: e.target.value })}
+            >
               <option value="Upcoming">Upcoming</option>
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
