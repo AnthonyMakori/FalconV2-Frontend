@@ -30,27 +30,27 @@ export default function EventsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false) 
   const router = useRouter()
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await fetch(`${API_URL}/events`)
-        if (!res.ok) throw new Error("Failed to fetch events")
+ useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch(`${API_URL}/events`)
+      if (!res.ok) throw new Error("Failed to fetch events")
 
-        const json = await res.json()
-        if (json?.data?.data && Array.isArray(json.data.data)) {
-          setEvents(json.data.data)
-        } else {
-          setEvents([])
-        }
-      } catch (err: any) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
+      const json = await res.json()
+      if (json?.data && Array.isArray(json.data)) {
+        setEvents(json.data)
+      } else {
+        setEvents([])
       }
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchEvents()
-  }, [])
+  fetchEvents()
+}, [])
 
   return (
     <div className="px-4 py-16">
