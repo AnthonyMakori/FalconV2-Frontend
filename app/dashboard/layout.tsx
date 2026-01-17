@@ -24,7 +24,7 @@ export default function DashboardLayout({
   return (
     <div className="container py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">User Dashboard</h1>
+        <h1 className="text-3xl font-bold">Welcome Back</h1>
         <SignOutButton />
       </div>
       {children}
