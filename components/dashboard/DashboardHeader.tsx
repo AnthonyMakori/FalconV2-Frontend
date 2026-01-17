@@ -3,12 +3,18 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Bell, Settings } from "lucide-react"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
 export function DashboardHeader({ user }: { user: any }) {
+  const profileImageUrl = user.profile_image
+    ? `${API_URL.replace("/api", "")}/storage/${user.profile_image}`
+    : "/placeholder.svg"
+
   return (
     <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between mb-8">
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={user.avatar || "/placeholder.svg"} />
+          <AvatarImage src={profileImageUrl} alt={user.name} />
           <AvatarFallback>
             {user.name?.substring(0, 2).toUpperCase()}
           </AvatarFallback>
@@ -18,7 +24,8 @@ export function DashboardHeader({ user }: { user: any }) {
           <h1 className="text-2xl font-bold">{user.name}</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>
-              Member since {new Date(user.created_at).toLocaleDateString()}
+              Member since{" "}
+              {new Date(user.created_at).toLocaleDateString()}
             </span>
             <span>•</span>
             <Badge variant="outline" className="bg-primary/10 text-primary">
