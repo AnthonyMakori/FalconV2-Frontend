@@ -208,14 +208,14 @@ export function AdminDashboardContent() {
             {/* Pagination Buttons */}
             <div className="flex justify-end gap-2 mt-4">
               <button
-                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
                 disabled={uploadsPage === 1}
                 onClick={() => setUploadsPage((prev) => prev - 1)}
               >
                 Previous
               </button>
               <button
-                className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
                 disabled={uploadsPage * ITEMS_PER_PAGE >= allUploads.length}
                 onClick={() => setUploadsPage((prev) => prev + 1)}
               >
