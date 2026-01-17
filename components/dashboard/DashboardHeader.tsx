@@ -10,6 +10,9 @@ export function DashboardHeader({ user }: { user: any }) {
     ? `${API_URL}/storage/app/public/${user.profile_image}`
     : "/placeholder.svg"
 
+    console.log("PROFILE IMAGE URL 👉", profileImageUrl)
+
+
   return (
     <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between mb-8">
       <div className="flex items-center gap-4">
