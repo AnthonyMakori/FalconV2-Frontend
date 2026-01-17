@@ -34,8 +34,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Trash } from "lucide-react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!
-
 type EventType = {
   id: number
   name: string
@@ -74,6 +72,12 @@ export default function EventsPage() {
     poster: null,
   })
 
+  // Helper to handle full or relative URLs
+  const getPosterUrl = (poster: string | null) => {
+    if (!poster) return null
+    return poster.startsWith("http") ? poster : `https://api.falconeyephilmz.com/assets/events/${poster}`
+  }
+
   // Load events on component mount
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -84,19 +88,18 @@ export default function EventsPage() {
     loadEvents()
   }, [])
 
-    const loadEvents = async () => {
-      setLoading(true)
-      setError("")
-      try {
-        const res = await apiFetch(`${API_URL}/events`)
-        setEvents(res?.data || [])
-      } catch (err: any) {
-        setError(err?.message || "Failed to load events")
-      } finally {
-        setLoading(false)
-      }
+  const loadEvents = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await apiFetch(`/events`) // apiFetch already has full base URL
+      setEvents(res?.data || [])
+    } catch (err: any) {
+      setError(err?.message || "Failed to load events")
+    } finally {
+      setLoading(false)
     }
-
+  }
 
   const saveEvent = async () => {
     if (!form.name || !form.location || !form.date || !form.type || !form.price) {
@@ -117,7 +120,7 @@ export default function EventsPage() {
       formData.append("description", form.description)
       if (form.poster) formData.append("poster", form.poster)
 
-      await apiFetch(`${API_URL}/events`, {
+      await apiFetch(`/events`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -146,7 +149,7 @@ export default function EventsPage() {
     setLoading(true)
     setError("")
     try {
-      await apiFetch(`${API_URL}/events/${id}`, { method: "DELETE" })
+      await apiFetch(`/events/${id}`, { method: "DELETE" })
       loadEvents()
     } catch (err: any) {
       setError(err?.message || "Failed to delete event")
@@ -209,7 +212,7 @@ export default function EventsPage() {
                     <TableCell>
                       {event.poster && (
                         <img
-                          src={event.poster}
+                          src={getPosterUrl(event.poster)!}
                           alt={event.name}
                           className="h-10 w-10 rounded object-cover"
                         />
