@@ -22,7 +22,6 @@ interface PurchaseItem {
   amount: number
   created_at: string
   thumbnail?: string
-  video_url?: string
 }
 
 export function PurchasesTab({
@@ -38,9 +37,12 @@ export function PurchasesTab({
   const [accessModalOpen, setAccessModalOpen] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
 
+  // TEMP: resolve video after verification (replace with secure token endpoint)
+  const getVideoUrl = (movieId: number) =>
+    `${process.env.NEXT_PUBLIC_API_URL}/movies/${movieId}/stream`
+
   return (
     <>
-      {/* ================= PURCHASES ================= */}
       <Card>
         <CardHeader>
           <CardTitle>Your Purchases</CardTitle>
@@ -101,7 +103,8 @@ export function PurchasesTab({
                       KES {Number(item.amount).toLocaleString()}
                     </div>
 
-                    {item.type !== "Subscription" && item.video_url && (
+                    {/* ✅ WATCH NOW FIXED */}
+                    {item.type !== "Subscription" && (
                       <Button
                         variant="link"
                         size="sm"
@@ -148,10 +151,10 @@ export function PurchasesTab({
       )}
 
       {/* ================= VIDEO PLAYER ================= */}
-      {selectedPurchase && selectedPurchase.video_url && (
+      {selectedPurchase && (
         <VideoPlayerModal
           open={playerOpen}
-          videoUrl={selectedPurchase.video_url}
+          videoUrl={getVideoUrl(selectedPurchase.movie_id)}
           onClose={() => {
             setPlayerOpen(false)
             setSelectedPurchase(null)
