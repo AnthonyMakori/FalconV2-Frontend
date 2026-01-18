@@ -31,42 +31,54 @@ export function AccessCodeModal({
   const [error, setError] = useState("")
 
   const handleVerify = async () => {
-    if (!accessCode) {
-      setError("Access code is required")
+  if (!accessCode) {
+    setError("Access code is required")
+    return
+  }
+
+  setLoading(true)
+  setError("")
+
+  try {
+    const token = localStorage.getItem("token")
+
+    if (!token) {
+      setError("You must be logged in to watch this movie.")
+      setLoading(false)
       return
     }
 
-    setLoading(true)
-    setError("")
+    const res = await fetch(`${API_URL}/verify-access-code`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token.startsWith("Bearer ")
+          ? token
+          : `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        access_code: accessCode,
+        movie_id: movieId,
+      }),
+    })
 
-    try {
-      const res = await fetch(`${API_URL}/verify-access-code`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          access_code: accessCode,
-          movie_id: movieId,
-        }),
-      })
+    const data = await res.json()
 
-      const data = await res.json()
-
-      if (!res.ok || !data.success) {
-        setError(data.message || "Invalid access code")
-        setLoading(false)
-        return
-      }
-
-      onSuccess()
-      onClose()
-    } catch (err) {
-      setError("Something went wrong. Please try again.")
-    } finally {
+    if (!res.ok || !data.success) {
+      setError(data.message || "Invalid access code")
       setLoading(false)
+      return
     }
+
+    onSuccess()
+    onClose()
+  } catch (err) {
+    setError("Something went wrong. Please try again.")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
