@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
-
 interface AccessCodeModalProps {
   open: boolean
   onClose: () => void
@@ -31,77 +30,77 @@ export function AccessCodeModal({
   const [error, setError] = useState("")
 
   const handleVerify = async () => {
-  if (!accessCode) {
-    setError("Access code is required")
-    return
-  }
-
-  setLoading(true)
-  setError("")
-
-  try {
-    const token = localStorage.getItem("token")
-
-    if (!token) {
-      setError("You must be logged in to watch this movie.")
-      setLoading(false)
+    if (!accessCode) {
+      setError("Access code is required")
       return
     }
 
-    const res = await fetch(`${API_URL}/verify-access-code`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token.startsWith("Bearer ")
-          ? token
-          : `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        access_code: accessCode,
-        movie_id: movieId,
-      }),
-    })
+    setLoading(true)
+    setError("")
 
-    const data = await res.json()
+    try {
+      const token = localStorage.getItem("token")
 
-    if (!res.ok || !data.success) {
-      setError(data.message || "Invalid access code")
+      if (!token) {
+        setError("You must be logged in to watch this movie.")
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch(`${API_URL}/verify-access-code`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token.startsWith("Bearer ")
+            ? token
+            : `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          access_code: accessCode,
+          movie_id: movieId,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        setError(data.message || "Invalid access code")
+        setLoading(false)
+        return
+      }
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      setError("Something went wrong. Please try again.")
+    } finally {
       setLoading(false)
-      return
     }
-
-    onSuccess()
-    onClose()
-  } catch (err) {
-    setError("Something went wrong. Please try again.")
-  } finally {
-    setLoading(false)
   }
-}
-
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
+        {/* Move DialogTitle directly under DialogContent */}
+        <DialogTitle>Enter Access Code</DialogTitle>
+
         <DialogHeader>
-          <DialogTitle>Enter Access Code</DialogTitle>
           <DialogDescription>
             Please enter the access code you received after purchasing this
             movie.
           </DialogDescription>
         </DialogHeader>
 
-        <Input
-          placeholder="Enter access code"
-          value={accessCode}
-          onChange={(e) => setAccessCode(e.target.value)}
-        />
+        <div className="mt-2">
+          <Input
+            placeholder="Enter access code"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value)}
+          />
+          {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+        </div>
 
-        {error && (
-          <p className="text-sm text-red-500">{error}</p>
-        )}
-
-        <DialogFooter>
+        <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
