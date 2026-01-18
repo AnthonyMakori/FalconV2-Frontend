@@ -24,10 +24,43 @@ export function WatchlistTab({ watchlist }: { watchlist: any[] }) {
 
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <div className="flex gap-2">
-                    <Button size="sm" variant="secondary">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={async () => {
+                        const accessCode = prompt("Enter your access code to watch this movie:");
+                        if (!accessCode) return;
+
+                        try {
+                          const res = await fetch("/verify-access-code", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              access_code: accessCode,
+                              movie_id: item.id,
+                            }),
+                          });
+
+                          const data = await res.json();
+
+                          if (res.ok && data.success) {
+                            alert("Access granted! Enjoy the movie 🎬");
+                            // Redirect or open the movie player here
+                          } else {
+                            alert(data.message || "Access denied.");
+                          }
+                        } catch (error) {
+                          console.error(error);
+                          alert("An error occurred. Please try again.");
+                        }
+                      }}
+                    >
                       <Play className="h-4 w-4 mr-1" />
                       Watch
                     </Button>
+
                     <Button
                       size="sm"
                       variant="outline"
