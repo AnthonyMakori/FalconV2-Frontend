@@ -1,26 +1,53 @@
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Play, Plus, ChevronRight } from "lucide-react"
-import { AccessCodeModal } from "@/components/AccessCodeModal"
 
-export function WatchlistTab({ watchlist }: { watchlist: any[] }) {
-  const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null)
-  const [modalOpen, setModalOpen] = useState(false)
+import { AccessCodeModal } from "@/components/AccessCodeModal"
+import { VideoPlayerModal } from "@/components/VideoPlayerModal"
+
+interface WatchlistItem {
+  id: number
+  title: string
+  type: string
+  addedOn: string
+  thumbnail?: string
+  video_url: string
+}
+
+export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
+  const [selectedMovie, setSelectedMovie] =
+    useState<WatchlistItem | null>(null)
+
+  const [accessModalOpen, setAccessModalOpen] = useState(false)
+  const [playerOpen, setPlayerOpen] = useState(false)
 
   return (
     <>
+      {/* ================= WATCHLIST ================= */}
       <Card>
         <CardHeader>
           <CardTitle>Your Watchlist</CardTitle>
-          <CardDescription>Movies and series you want to watch</CardDescription>
+          <CardDescription>
+            Movies and series you want to watch
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {watchlist.map((item) => (
-              <div key={item.id} className="border rounded-lg overflow-hidden">
+              <div
+                key={item.id}
+                className="border rounded-lg overflow-hidden"
+              >
                 <div className="relative aspect-video">
                   <img
                     src={item.thumbnail || "/placeholder.svg"}
@@ -34,8 +61,8 @@ export function WatchlistTab({ watchlist }: { watchlist: any[] }) {
                         size="sm"
                         variant="secondary"
                         onClick={() => {
-                          setSelectedMovieId(item.id)
-                          setModalOpen(true)
+                          setSelectedMovie(item)
+                          setAccessModalOpen(true)
                         }}
                       >
                         <Play className="h-4 w-4 mr-1" />
@@ -54,7 +81,9 @@ export function WatchlistTab({ watchlist }: { watchlist: any[] }) {
                 </div>
 
                 <div className="p-3">
-                  <h4 className="font-medium truncate">{item.title}</h4>
+                  <h4 className="font-medium truncate">
+                    {item.title}
+                  </h4>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <Badge variant="outline">{item.type}</Badge>
                     <span>Added {item.addedOn}</span>
@@ -77,14 +106,27 @@ export function WatchlistTab({ watchlist }: { watchlist: any[] }) {
         </CardFooter>
       </Card>
 
-      {selectedMovieId && (
+      {/* ================= ACCESS CODE MODAL ================= */}
+      {selectedMovie && (
         <AccessCodeModal
-          open={modalOpen}
-          movieId={selectedMovieId}
-          onClose={() => setModalOpen(false)}
+          open={accessModalOpen}
+          movieId={selectedMovie.id}
+          onClose={() => setAccessModalOpen(false)}
           onSuccess={() => {
-            // Redirect to player page or open video
-            console.log("Access granted, play movie")
+            setAccessModalOpen(false)
+            setPlayerOpen(true)
+          }}
+        />
+      )}
+
+      {/* ================= VIDEO PLAYER ================= */}
+      {selectedMovie && (
+        <VideoPlayerModal
+          open={playerOpen}
+          videoUrl={selectedMovie.video_url}
+          onClose={() => {
+            setPlayerOpen(false)
+            setSelectedMovie(null)
           }}
         />
       )}
