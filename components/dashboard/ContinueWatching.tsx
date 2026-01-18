@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Play } from "lucide-react"
 
-export function ContinueWatching({ data = [] }: { data?: any[] }) {
+interface ContinueWatchingProps {
+  data?: any[]
+  onPlay?: (movieId: number) => void
+}
+
+export function ContinueWatching({ data = [], onPlay }: ContinueWatchingProps) {
   if (!data.length) {
     return (
       <Card>
@@ -39,7 +44,12 @@ export function ContinueWatching({ data = [] }: { data?: any[] }) {
                 />
 
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Button size="icon" variant="ghost" className="text-white">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-white"
+                    onClick={() => onPlay && onPlay(item.movie_id)}
+                  >
                     <Play className="h-8 w-8" />
                   </Button>
                 </div>
