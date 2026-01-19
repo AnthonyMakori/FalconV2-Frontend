@@ -80,11 +80,21 @@ export default function Header() {
           {/* Logo */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link href="/" className="mr-6 flex items-center space-x-2">
-              <div className="relative h-10 w-10 overflow-hidden">
-                <Image src="/images/falcon-eye-philmz-logo.png" alt="Falcon Eye Philmz" fill className="object-contain" />
-              </div>
-              <span className="text-primary font-bold text-xl">Falcon Eye Philmz</span>
-            </Link>
+            {/* Logo */}
+            <div className="relative h-12 w-12 sm:h-10 sm:w-10 overflow-hidden">
+              <Image
+                src="/images/falcon-eye-philmz-logo.png"
+                alt="Falcon Eye Philmz"
+                fill
+                className="object-contain"
+              />
+            </div>
+
+            {/* Brand Name (hidden on small screens) */}
+            <span className="hidden sm:inline text-primary font-bold text-xl">
+              Falcon Eye Philmz
+            </span>
+          </Link>
           </motion.div>
 
           {/* Desktop Navigation */}
