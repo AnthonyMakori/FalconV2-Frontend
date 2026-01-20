@@ -2,21 +2,52 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { ArrowLeft, Upload, Plus, X } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Upload, Plus, X } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
-export default function NewMoviePage() {
-  const [loading, setLoading] = useState(false)
+/* ============================================================
+   BUNNY STREAM CONFIG
+============================================================ */
+const BUNNY_LIBRARY_ID = "583613"
+const BUNNY_API_KEY = "319d8af4-f8a4-4570-9c9e8cdeacdc-e2e7-4a7d"
+const BUNNY_CDN_HOST = "vz-8e6ec75c-c5b.b-cdn.net"
 
-  // BASIC INFO
+/* ============================================================
+   PAGE
+============================================================ */
+export default function NewMoviePage() {
+
+  /* ===================== STATE ===================== */
+  const [loading, setLoading] = useState(false)
+  const [uploadingMovie, setUploadingMovie] = useState(false)
+
+  /* ---------------- BASIC INFO ---------------- */
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [releaseYear, setReleaseYear] = useState("")
@@ -25,40 +56,43 @@ export default function NewMoviePage() {
   const [genre, setGenre] = useState("")
   const [status, setStatus] = useState("draft")
 
-  // CAST & TAGS
+  /* ---------------- CAST & TAGS ---------------- */
   const [castInput, setCastInput] = useState("")
   const [casts, setCasts] = useState<string[]>([])
+
   const [tagInput, setTagInput] = useState("")
   const [tags, setTags] = useState<string[]>([])
 
-  // MEDIA
+  /* ---------------- MEDIA ---------------- */
   const [poster, setPoster] = useState<File | null>(null)
   const [trailer, setTrailer] = useState<File | null>(null)
   const [movie, setMovie] = useState<File | null>(null)
   const [subtitles, setSubtitles] = useState<File[]>([])
 
-  // PRICING
+  /* ---------------- PRICING ---------------- */
   const [rentalPrice, setRentalPrice] = useState("")
   const [purchasePrice, setPurchasePrice] = useState("")
   const [rentalPeriod, setRentalPeriod] = useState("")
   const [freePreview, setFreePreview] = useState(false)
   const [previewDuration, setPreviewDuration] = useState("")
 
-  // SEO
+  /* ---------------- SEO ---------------- */
   const [seoTitle, setSeoTitle] = useState("")
   const [seoDescription, setSeoDescription] = useState("")
   const [seoKeywords, setSeoKeywords] = useState("")
 
-  // ------------------ HELPERS ------------------
-
+  /* ============================================================
+     HELPERS
+  ============================================================ */
   const addCast = () => {
     if (!castInput.trim()) return
     setCasts([...casts, castInput.trim()])
     setCastInput("")
   }
 
-  const removeCast = (name: string) =>
+  const removeCast = (name: string) => {
     setCasts(casts.filter(c => c !== name))
+  }
 
   const addTag = () => {
     if (!tagInput.trim()) return
@@ -66,53 +100,101 @@ export default function NewMoviePage() {
     setTagInput("")
   }
 
-  const removeTag = (tag: string) =>
+  const removeTag = (tag: string) => {
     setTags(tags.filter(t => t !== tag))
+  }
 
-  // ------------------ SUBMIT ------------------
+  /* ============================================================
+     BUNNY UPLOAD
+  ============================================================ */
+  const uploadMovieToBunny = async (file: File): Promise<string> => {
+    setUploadingMovie(true)
 
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("title", file.name)
+
+    const res = await fetch(
+      `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
+      {
+        method: "POST",
+        headers: {
+          AccessKey: BUNNY_API_KEY,
+        },
+        body: formData,
+      }
+    )
+
+    if (!res.ok) {
+      const err = await res.text()
+      setUploadingMovie(false)
+      throw new Error("Bunny upload failed: " + err)
+    }
+
+    const data = await res.json()
+    setUploadingMovie(false)
+
+    return data.guid
+  }
+
+  /* ============================================================
+     SUBMIT
+  ============================================================ */
   const submitMovie = async (publish = false) => {
     setLoading(true)
 
-    const formData = new FormData()
-    const token = localStorage.getItem("token");
-
-    // BASIC
-    formData.append("title", title)
-    formData.append("description", description)
-    formData.append("release_year", releaseYear)
-    formData.append("duration", duration)
-    formData.append("language", language)
-    formData.append("genre", genre)
-    formData.append("status", publish ? "published" : status)
-
-    // PRICING
-    formData.append("rental_price", rentalPrice)
-    formData.append("purchase_price", purchasePrice)
-    formData.append("rental_period", rentalPeriod)
-    formData.append("free_preview", String(freePreview))
-    formData.append("preview_duration", previewDuration)
-
-    // SEO
-    formData.append("seo_title", seoTitle)
-    formData.append("seo_description", seoDescription)
-    formData.append("seo_keywords", seoKeywords)
-
-    // CAST & TAGS
-    casts.forEach(c => formData.append("casts[]", c))
-    tags.forEach(t => formData.append("tags[]", t))
-
-    // MEDIA
-    if (poster) formData.append("poster", poster)
-    if (trailer) formData.append("trailer", trailer)
-    if (movie) formData.append("movie", movie)
-    subtitles.forEach(s => formData.append("subtitles[]", s))
-
     try {
+      const token = localStorage.getItem("token")
+      let bunnyVideoId: string | null = null
+
+      /* 1️⃣ Upload movie to Bunny */
+      if (movie) {
+        bunnyVideoId = await uploadMovieToBunny(movie)
+      }
+
+      /* 2️⃣ Build form data for backend */
+      const formData = new FormData()
+
+      // BASIC
+      formData.append("title", title)
+      formData.append("description", description)
+      formData.append("release_year", releaseYear)
+      formData.append("duration", duration)
+      formData.append("language", language)
+      formData.append("genre", genre)
+      formData.append("status", publish ? "published" : status)
+
+      // PRICING
+      formData.append("rental_price", rentalPrice)
+      formData.append("purchase_price", purchasePrice)
+      formData.append("rental_period", rentalPeriod)
+      formData.append("free_preview", String(freePreview))
+      formData.append("preview_duration", previewDuration)
+
+      // SEO
+      formData.append("seo_title", seoTitle)
+      formData.append("seo_description", seoDescription)
+      formData.append("seo_keywords", seoKeywords)
+
+      // CASTS & TAGS
+      casts.forEach(c => formData.append("casts[]", c))
+      tags.forEach(t => formData.append("tags[]", t))
+
+      // MEDIA (NON-MOVIE)
+      if (poster) formData.append("poster", poster)
+      if (trailer) formData.append("trailer", trailer)
+      subtitles.forEach(s => formData.append("subtitles[]", s))
+
+      // BUNNY VIDEO ID
+      if (bunnyVideoId) {
+        formData.append("bunny_video_id", bunnyVideoId)
+      }
+
+      /* 3️⃣ Save to backend */
       const res = await fetch(`${API_URL}/movies`, {
         method: "POST",
-         headers: {
-          'Authorization': `Bearer ${token}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       })
@@ -122,8 +204,9 @@ export default function NewMoviePage() {
         throw err
       }
 
-      alert("Movie saved successfully!")
-    } catch (err: any) {
+      alert("Movie uploaded & saved successfully 🎉")
+
+    } catch (err) {
       console.error(err)
       alert("Failed to save movie")
     } finally {
@@ -131,10 +214,13 @@ export default function NewMoviePage() {
     }
   }
 
-  // ------------------ UI ------------------
-
+  /* ============================================================
+     UI
+  ============================================================ */
   return (
     <div className="space-y-6">
+
+      {/* HEADER */}
       <div className="flex items-center gap-4">
         <Link href="/admin/movies">
           <Button variant="outline" size="icon">
@@ -144,7 +230,9 @@ export default function NewMoviePage() {
         <h1 className="text-3xl font-bold">Add New Movie</h1>
       </div>
 
+      {/* TABS */}
       <Tabs defaultValue="basic">
+
         <TabsList>
           <TabsTrigger value="basic">Basic</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
@@ -152,21 +240,22 @@ export default function NewMoviePage() {
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
 
-        {/* ---------------- BASIC ---------------- */}
+        {/* ================================================= BASIC ================================================= */}
         <TabsContent value="basic">
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
-              <CardDescription>Enter the basic details of the movie</CardDescription>
+              <CardDescription>Enter movie details</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <div className="space-y-2">
+
+              <div>
                 <Label>Title</Label>
                 <Input value={title} onChange={e => setTitle(e.target.value)} />
               </div>
 
-              <div className="space-y-2">
+              <div>
                 <Label>Description</Label>
                 <Textarea
                   className="min-h-[120px]"
@@ -176,18 +265,18 @@ export default function NewMoviePage() {
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
-                <Input placeholder="Release Year" type="number" value={releaseYear} onChange={e => setReleaseYear(e.target.value)} />
-                <Input placeholder="Duration (min)" type="number" value={duration} onChange={e => setDuration(e.target.value)} />
+                <Input placeholder="Release Year" value={releaseYear} onChange={e => setReleaseYear(e.target.value)} />
+                <Input placeholder="Duration (min)" value={duration} onChange={e => setDuration(e.target.value)} />
                 <Input placeholder="Language" value={language} onChange={e => setLanguage(e.target.value)} />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <Select onValueChange={setGenre}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select genre" />
+                    <SelectValue placeholder="Genre" />
                   </SelectTrigger>
                   <SelectContent>
-                    {["action","comedy","drama","horror","romance","thriller"].map(g => (
+                    {["action", "comedy", "drama", "horror", "romance", "thriller"].map(g => (
                       <SelectItem key={g} value={g}>{g}</SelectItem>
                     ))}
                   </SelectContent>
@@ -195,7 +284,7 @@ export default function NewMoviePage() {
 
                 <Select onValueChange={setStatus}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
@@ -205,10 +294,10 @@ export default function NewMoviePage() {
                 </Select>
               </div>
 
-              {/* CAST */}
-              <div className="space-y-2">
+              {/* CASTS */}
+              <div>
                 <Label>Cast</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 my-2">
                   {casts.map(c => (
                     <span key={c} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
                       {c}
@@ -218,14 +307,14 @@ export default function NewMoviePage() {
                 </div>
                 <div className="flex gap-2">
                   <Input value={castInput} onChange={e => setCastInput(e.target.value)} />
-                  <Button size="sm" onClick={addCast}><Plus className="h-4 w-4" /></Button>
+                  <Button size="sm" onClick={addCast}><Plus /></Button>
                 </div>
               </div>
 
               {/* TAGS */}
-              <div className="space-y-2">
+              <div>
                 <Label>Tags</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 my-2">
                   {tags.map(t => (
                     <span key={t} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
                       {t}
@@ -235,145 +324,64 @@ export default function NewMoviePage() {
                 </div>
                 <div className="flex gap-2">
                   <Input value={tagInput} onChange={e => setTagInput(e.target.value)} />
-                  <Button size="sm" onClick={addTag}><Plus className="h-4 w-4" /></Button>
+                  <Button size="sm" onClick={addTag}><Plus /></Button>
                 </div>
               </div>
+
             </CardContent>
           </Card>
         </TabsContent>
 
-       {/* MEDIA */}
+        {/* ================================================= MEDIA ================================================= */}
         <TabsContent value="media">
           <Card>
             <CardHeader>
-              <CardTitle>Media Files</CardTitle>
-              <CardDescription>
-                Upload movie poster, trailer, full movie, and subtitles
-              </CardDescription>
+              <CardTitle>Media Uploads</CardTitle>
+              <CardDescription>Movie file uploads to Bunny CDN</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6">
 
               {/* POSTER */}
-              <div className="space-y-2">
-                <Label>Poster Image</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Upload the movie poster image
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Recommended size: 500×750px (JPG / PNG)
-                  </p>
-
-                  <Input
-                    id="poster-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => setPoster(e.target.files?.[0] || null)}
-                  />
-
-                  <Button variant="outline" size="sm" className="mt-4">
-                    <Label htmlFor="poster-upload" className="cursor-pointer">
-                      Select Poster
-                    </Label>
-                  </Button>
-                </div>
-              </div>
+              <MediaUpload
+                label="Poster Image"
+                accept="image/*"
+                onChange={f => setPoster(f)}
+              />
 
               {/* TRAILER */}
-              <div className="space-y-2">
-                <Label>Trailer Video</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Upload a short trailer clip
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Supported formats: MP4, MOV, MKV
-                  </p>
+              <MediaUpload
+                label="Trailer Video"
+                accept="video/*"
+                onChange={f => setTrailer(f)}
+              />
 
-                  <Input
-                    id="trailer-upload"
-                    type="file"
-                    accept="video/*"
-                    className="hidden"
-                    onChange={(e) => setTrailer(e.target.files?.[0] || null)}
-                  />
+              {/* MOVIE */}
+              <MediaUpload
+                label="Full Movie (Uploaded to Bunny)"
+                accept="video/*"
+                onChange={f => setMovie(f)}
+              />
 
-                  <Button variant="outline" size="sm" className="mt-4">
-                    <Label htmlFor="trailer-upload" className="cursor-pointer">
-                      Select Trailer
-                    </Label>
-                  </Button>
-                </div>
-              </div>
-
-              {/* FULL MOVIE */}
-              <div className="space-y-2">
-                <Label>Full Movie</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Upload the full movie file
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Supported formats: MP4, MOV, MKV
-                  </p>
-
-                  <Input
-                    id="movie-upload"
-                    type="file"
-                    accept="video/*"
-                    className="hidden"
-                    onChange={(e) => setMovie(e.target.files?.[0] || null)}
-                  />
-
-                  <Button variant="outline" size="sm" className="mt-4">
-                    <Label htmlFor="movie-upload" className="cursor-pointer">
-                      Select Movie File
-                    </Label>
-                  </Button>
-                </div>
-              </div>
+              {uploadingMovie && (
+                <p className="text-sm text-muted-foreground">
+                  Uploading movie to Bunny CDN...
+                </p>
+              )}
 
               {/* SUBTITLES */}
-              <div className="space-y-2">
-                <Label>Subtitle Files</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Upload subtitle files (multiple allowed)
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Supported formats: SRT, VTT
-                  </p>
-
-                  <Input
-                    id="subtitle-upload"
-                    type="file"
-                    accept=".srt,.vtt"
-                    multiple
-                    className="hidden"
-                    onChange={(e) =>
-                      setSubtitles(Array.from(e.target.files || []))
-                    }
-                  />
-
-                  <Button variant="outline" size="sm" className="mt-4">
-                    <Label htmlFor="subtitle-upload" className="cursor-pointer">
-                      Select Subtitle Files
-                    </Label>
-                  </Button>
-                </div>
-              </div>
+              <MediaUpload
+                label="Subtitles"
+                accept=".srt,.vtt"
+                multiple
+                onChangeMultiple={setSubtitles}
+              />
 
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* PRICING */}
+        {/* ================================================= PRICING ================================================= */}
         <TabsContent value="pricing">
           <Card>
             <CardContent className="space-y-4 pt-6">
@@ -391,18 +399,20 @@ export default function NewMoviePage() {
           </Card>
         </TabsContent>
 
-        {/* SEO */}
+        {/* ================================================= SEO ================================================= */}
         <TabsContent value="seo">
           <Card>
             <CardContent className="space-y-4 pt-6">
               <Input placeholder="SEO title" value={seoTitle} onChange={e => setSeoTitle(e.target.value)} />
               <Textarea placeholder="SEO description" value={seoDescription} onChange={e => setSeoDescription(e.target.value)} />
-              <Input placeholder="Keywords" value={seoKeywords} onChange={e => setSeoKeywords(e.target.value)} />
+              <Input placeholder="SEO keywords" value={seoKeywords} onChange={e => setSeoKeywords(e.target.value)} />
             </CardContent>
           </Card>
         </TabsContent>
+
       </Tabs>
 
+      {/* ACTIONS */}
       <div className="flex justify-end gap-4">
         <Button variant="outline" disabled={loading} onClick={() => submitMovie(false)}>
           Save as Draft
@@ -410,6 +420,49 @@ export default function NewMoviePage() {
         <Button disabled={loading} onClick={() => submitMovie(true)}>
           Publish Movie
         </Button>
+      </div>
+
+    </div>
+  )
+}
+
+/* ============================================================
+   REUSABLE MEDIA UPLOAD COMPONENT
+============================================================ */
+function MediaUpload({
+  label,
+  accept,
+  multiple = false,
+  onChange,
+  onChangeMultiple
+}: {
+  label: string
+  accept: string
+  multiple?: boolean
+  onChange?: (file: File | null) => void
+  onChangeMultiple?: (files: File[]) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="border-2 border-dashed rounded-lg p-6 text-center">
+        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+        <Input
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          className="hidden"
+          onChange={(e) => {
+            if (multiple && onChangeMultiple) {
+              onChangeMultiple(Array.from(e.target.files || []))
+            } else if (onChange) {
+              onChange(e.target.files?.[0] || null)
+            }
+          }}
+        />
+        <Label className="cursor-pointer">
+          <Button variant="outline" size="sm">Select File</Button>
+        </Label>
       </div>
     </div>
   )
