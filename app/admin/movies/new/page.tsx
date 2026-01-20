@@ -59,7 +59,6 @@ export default function NewMoviePage() {
   /* ---------------- CAST & TAGS ---------------- */
   const [castInput, setCastInput] = useState("")
   const [casts, setCasts] = useState<string[]>([])
-
   const [tagInput, setTagInput] = useState("")
   const [tags, setTags] = useState<string[]>([])
 
@@ -427,7 +426,7 @@ export default function NewMoviePage() {
 }
 
 /* ============================================================
-   REUSABLE MEDIA UPLOAD COMPONENT
+   REUSABLE MEDIA UPLOAD COMPONENT (FIXED)
 ============================================================ */
 function MediaUpload({
   label,
@@ -442,27 +441,54 @@ function MediaUpload({
   onChange?: (file: File | null) => void
   onChangeMultiple?: (files: File[]) => void
 }) {
+  const inputId = `file-upload-${label.replace(/\s+/g, "-").toLowerCase()}`
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+
+  const handleChange = (files: FileList | null) => {
+    if (!files) return
+    if (multiple) {
+      const arr = Array.from(files)
+      setSelectedFiles(arr)
+      onChangeMultiple?.(arr)
+    } else {
+      const file = files[0]
+      setSelectedFiles(file ? [file] : [])
+      onChange?.(file || null)
+    }
+  }
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
+
+      <input
+        id={inputId}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={(e) => handleChange(e.target.files)}
+      />
+
       <div className="border-2 border-dashed rounded-lg p-6 text-center">
         <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-        <Input
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          className="hidden"
-          onChange={(e) => {
-            if (multiple && onChangeMultiple) {
-              onChangeMultiple(Array.from(e.target.files || []))
-            } else if (onChange) {
-              onChange(e.target.files?.[0] || null)
-            }
-          }}
-        />
-        <Label className="cursor-pointer">
-          <Button variant="outline" size="sm">Select File</Button>
+        <p className="text-sm text-muted-foreground mb-2">
+          Click the button below to select file{multiple ? "s" : ""}
+        </p>
+        <Label htmlFor={inputId} className="cursor-pointer">
+          <Button variant="outline" size="sm">
+            Select File
+          </Button>
         </Label>
+
+        {/* Display selected files */}
+        {selectedFiles.length > 0 && (
+          <div className="mt-2 text-sm text-muted-foreground">
+            {selectedFiles.map((f, i) => (
+              <p key={i}>{f.name}</p>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
