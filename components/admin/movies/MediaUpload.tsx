@@ -33,10 +33,17 @@ export default function MediaUpload({
     }
   }
 
+  // Trigger file input manually
+  const triggerInput = () => {
+    const input = document.getElementById(inputId) as HTMLInputElement | null
+    input?.click()
+  }
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
 
+      {/* Hidden input */}
       <input
         id={inputId}
         type="file"
@@ -46,16 +53,26 @@ export default function MediaUpload({
         onChange={(e) => handleChange(e.target.files)}
       />
 
-      <div className="border-2 border-dashed rounded-lg p-6 text-center">
+      {/* Dashed box */}
+      <div
+        className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer"
+        onClick={triggerInput}
+      >
         <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
         <p className="text-sm text-muted-foreground mb-2">
-          Click the button below to select file{multiple ? "s" : ""}
+          Click here or the button below to select file{multiple ? "s" : ""}
         </p>
-        <Label htmlFor={inputId} className="cursor-pointer">
-          <Button variant="outline" size="sm">
-            Select File
-          </Button>
-        </Label>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation() // prevent double triggering
+            triggerInput()
+          }}
+        >
+          Select File
+        </Button>
 
         {selectedFiles.length > 0 && (
           <div className="mt-2 text-sm text-muted-foreground">
