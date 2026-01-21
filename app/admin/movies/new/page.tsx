@@ -57,26 +57,54 @@ export default function NewMoviePage() {
   // -----------------------------
   // Upload video to Bunny CDN
   // -----------------------------
-  const uploadVideoToBunny = async (file: File) => {
-    const url = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos` // body: formData,
-
-    const formData = new FormData()
-    formData.append("title", file.name)
-    formData.append("file", file)
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { AccessKey: BUNNY_ACCESS_KEY },
-    })
-
-    if (!response.ok) {
-      const errText = await response.text()
-      throw new Error("Failed to upload video to Bunny CDN: " + errText)
-    }
-
-    const data = await response.json()
-    return data.guid // Bunny video ID
+ const uploadVideoToBunny = async (file: File) => {
+  if (!BUNNY_LIBRARY_ID || !BUNNY_ACCESS_KEY) {
+    throw new Error("Bunny credentials missing")
   }
+
+  // 1️⃣ Create video entry
+  const createRes = await fetch(
+    `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
+    {
+      method: "POST",
+      headers: {
+        AccessKey: BUNNY_ACCESS_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: file.name,
+      }),
+    }
+  )
+
+  if (!createRes.ok) {
+    const err = await createRes.text()
+    throw new Error("Failed to create Bunny video: " + err)
+  }
+
+  const { guid } = await createRes.json()
+
+  // 2️⃣ Upload raw video file
+  const uploadRes = await fetch(
+    `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${guid}`,
+    {
+      method: "PUT",
+      headers: {
+        AccessKey: BUNNY_ACCESS_KEY,
+        "Content-Type": "application/octet-stream",
+      },
+      body: file, // ⬅️ RAW FILE (VERY IMPORTANT)
+    }
+  )
+
+  if (!uploadRes.ok) {
+    const err = await uploadRes.text()
+    throw new Error("Failed to upload video file: " + err)
+  }
+
+  return guid
+}
+
 
   // -----------------------------
   // Submit movie
