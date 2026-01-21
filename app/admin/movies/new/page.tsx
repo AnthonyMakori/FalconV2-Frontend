@@ -1,40 +1,61 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import BasicInfo from "@/components/admin/movies/BasicInfo"
+import MediaUploadSection from "@/components/admin/movies/MediaUploadSection"
+import PricingInfo from "@/components/admin/movies/PricingInfo"
+import SeoInfo from "@/components/admin/movies/SeoInfo"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+const BUNNY_LIBRARY_ID = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID!
+const BUNNY_ACCESS_KEY = process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY!
 
 export default function NewMoviePage() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [releaseYear, setReleaseYear] = useState("");
-  const [duration, setDuration] = useState("");
-  const [language, setLanguage] = useState("");
-  const [genre, setGenre] = useState("");
-  const [status, setStatus] = useState("draft");
+  const [loading, setLoading] = useState(false)
+  const [uploadingMovie, setUploadingMovie] = useState(false)
 
-  const [rentalPrice, setRentalPrice] = useState("");
-  const [purchasePrice, setPurchasePrice] = useState("");
-  const [rentalPeriod, setRentalPeriod] = useState("");
+  // Basic Info
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [releaseYear, setReleaseYear] = useState("")
+  const [duration, setDuration] = useState("")
+  const [language, setLanguage] = useState("")
+  const [genre, setGenre] = useState("")
+  const [status, setStatus] = useState("draft")
+  const [casts, setCasts] = useState<string[]>([])
+  const [castInput, setCastInput] = useState("")
+  const [tags, setTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState("")
 
-  const [freePreview, setFreePreview] = useState(false);
-  const [previewDuration, setPreviewDuration] = useState("");
+  // Media
+  const [poster, setPoster] = useState<File | null>(null)
+  const [trailer, setTrailer] = useState<File | null>(null)
+  const [movie, setMovie] = useState<File | null>(null)
+  const [subtitles, setSubtitles] = useState<File[]>([])
 
-  const [poster, setPoster] = useState<File | null>(null);
-  const [trailer, setTrailer] = useState<File | null>(null);
-  const [subtitles, setSubtitles] = useState<File[]>([]);
+  // Pricing
+  const [rentalPrice, setRentalPrice] = useState("")
+  const [purchasePrice, setPurchasePrice] = useState("")
+  const [rentalPeriod, setRentalPeriod] = useState("")
+  const [freePreview, setFreePreview] = useState(false)
+  const [previewDuration, setPreviewDuration] = useState("")
 
-  const [casts, setCasts] = useState<string[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
+  // SEO
+  const [seoTitle, setSeoTitle] = useState("")
+  const [seoDescription, setSeoDescription] = useState("")
+  const [seoKeywords, setSeoKeywords] = useState("")
 
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDescription, setSeoDescription] = useState("");
-  const [seoKeywords, setSeoKeywords] = useState("");
+  // Add/Remove Casts
+  const addCast = () => { if (castInput.trim()) { setCasts([...casts, castInput.trim()]); setCastInput("") } }
+  const removeCast = (c: string) => setCasts(casts.filter(x => x !== c))
 
-  const [bunnyVideoId, setBunnyVideoId] = useState("");
-  const [uploading, setUploading] = useState(false);
-
-  const BUNNY_LIBRARY_ID = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID!;
-  const BUNNY_ACCESS_KEY = process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY!;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+  // Add/Remove Tags
+  const addTag = () => { if (tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput("") } }
+  const removeTag = (t: string) => setTags(tags.filter(x => x !== t))
 
   // -----------------------------
   // Upload video to Bunny CDN
@@ -54,263 +75,138 @@ export default function NewMoviePage() {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to upload video to Bunny CDN");
+      const errText = await response.text()
+      throw new Error("Failed to upload video to Bunny CDN: " + errText)
     }
 
     const data = await response.json();
-    return data.guid; // Return Bunny video ID
+    return data.guid; // Returns Bunny video ID
   };
 
-  // -----------------------------
-  // Handle Form Submission
-  // -----------------------------
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUploading(true);
-
+  // Submit movie
+  const submitMovie = async (publish = false) => {
+    setLoading(true)
     try {
-      // Upload trailer to Bunny if exists
-      let videoGuid = bunnyVideoId;
-      if (trailer) {
-        videoGuid = await uploadVideoToBunny(trailer);
-        setBunnyVideoId(videoGuid);
+      const token = localStorage.getItem("token")
+      let bunnyVideoId: string | null = null
+
+      // Upload full movie to Bunny if selected
+      if (movie) {
+        setUploadingMovie(true)
+        bunnyVideoId = await uploadVideoToBunny(movie)
+        setUploadingMovie(false)
       }
 
-      // Prepare FormData for Laravel
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("release_year", releaseYear);
-      formData.append("duration", duration);
-      formData.append("language", language);
-      formData.append("genre", genre);
-      formData.append("status", status);
+      const formData = new FormData()
+      formData.append("title", title)
+      formData.append("description", description)
+      formData.append("release_year", releaseYear)
+      formData.append("duration", duration)
+      formData.append("language", language)
+      formData.append("genre", genre)
+      formData.append("status", publish ? "published" : status)
+      formData.append("rental_price", rentalPrice)
+      formData.append("purchase_price", purchasePrice)
+      formData.append("rental_period", rentalPeriod)
+      formData.append("free_preview", freePreview ? "1" : "0")
+      formData.append("preview_duration", previewDuration)
+      formData.append("seo_title", seoTitle)
+      formData.append("seo_description", seoDescription)
+      formData.append("seo_keywords", seoKeywords)
+      casts.forEach(c => formData.append("casts[]", c))
+      tags.forEach(t => formData.append("tags[]", t))
+      if (poster) formData.append("poster", poster)
+      if (trailer) formData.append("trailer", trailer)
+      subtitles.forEach(s => formData.append("subtitles[]", s))
+      if (bunnyVideoId) formData.append("bunny_video_id", bunnyVideoId)
 
-      formData.append("rental_price", rentalPrice);
-      formData.append("purchase_price", purchasePrice);
-      formData.append("rental_period", rentalPeriod);
-
-      formData.append("free_preview", freePreview ? "1" : "0");
-      formData.append("preview_duration", previewDuration);
-
-      if (poster) formData.append("poster", poster);
-      if (trailer) formData.append("trailer", trailer);
-      subtitles.forEach((sub) => formData.append("subtitles[]", sub));
-
-      casts.forEach((cast) => formData.append("casts[]", cast));
-      tags.forEach((tag) => formData.append("tags[]", tag));
-
-      formData.append("seo_title", seoTitle);
-      formData.append("seo_description", seoDescription);
-      formData.append("seo_keywords", seoKeywords);
-
-      formData.append("bunny_video_id", videoGuid);
-
-      // Send to Laravel API
-      const response = await fetch(`${API_URL}/movies`, {
+      const res = await fetch(`${API_URL}/movies`, {
         method: "POST",
-        body: formData,
-      });
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      })
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create movie");
-      }
-
-      const result = await response.json();
-      alert("Movie created successfully!");
-      console.log(result);
-    } catch (error: any) {
-      console.error(error);
-      alert(error.message || "An error occurred while creating the movie");
+      if (!res.ok) throw await res.json()
+      alert("Movie saved successfully 🎉")
+    } catch (err: any) {
+      console.error(err)
+      alert("Failed: " + (err.message || JSON.stringify(err)))
     } finally {
-      setUploading(false);
+      setLoading(false)
+      setUploadingMovie(false)
     }
-  };
+  }
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Add New Movie</h1>
+    <div className="space-y-6">
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Basic Info */}
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          className="border p-2 w-full"
-        />
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          className="border p-2 w-full"
-        />
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/admin/movies">
+          <Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
+        </Link>
+        <h1 className="text-3xl font-bold">Add New Movie</h1>
+      </div>
 
-        <div className="flex gap-4">
-          <input
-            type="number"
-            placeholder="Release Year"
-            value={releaseYear}
-            onChange={(e) => setReleaseYear(e.target.value)}
-            required
-            className="border p-2 w-1/3"
+      {/* Tabs */}
+      <Tabs defaultValue="basic">
+        <TabsList>
+          <TabsTrigger value="basic">Basic</TabsTrigger>
+          <TabsTrigger value="media">Media</TabsTrigger>
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
+          <TabsTrigger value="seo">SEO</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="basic">
+          <BasicInfo
+            title={title} setTitle={setTitle}
+            description={description} setDescription={setDescription}
+            releaseYear={releaseYear} setReleaseYear={setReleaseYear}
+            duration={duration} setDuration={setDuration}
+            language={language} setLanguage={setLanguage}
+            genre={genre} setGenre={setGenre}
+            status={status} setStatus={setStatus}
+            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput}
+            tags={tags} addTag={addTag} removeTag={removeTag} tagInput={tagInput} setTagInput={setTagInput}
           />
-          <input
-            type="number"
-            placeholder="Duration (min)"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            required
-            className="border p-2 w-1/3"
+        </TabsContent>
+
+        <TabsContent value="media">
+          <MediaUploadSection
+            poster={poster} setPoster={setPoster}
+            trailer={trailer} setTrailer={setTrailer}
+            movie={movie} setMovie={setMovie}
+            subtitles={subtitles} setSubtitles={setSubtitles}
+            uploadingMovie={uploadingMovie}
           />
-          <input
-            type="text"
-            placeholder="Language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            required
-            className="border p-2 w-1/3"
+          {uploadingMovie && <p className="text-sm text-muted-foreground">Uploading full movie to Bunny CDN...</p>}
+        </TabsContent>
+
+        <TabsContent value="pricing">
+          <PricingInfo
+            rentalPrice={rentalPrice} setRentalPrice={setRentalPrice}
+            purchasePrice={purchasePrice} setPurchasePrice={setPurchasePrice}
+            rentalPeriod={rentalPeriod} setRentalPeriod={setRentalPeriod}
+            freePreview={freePreview} setFreePreview={setFreePreview}
+            previewDuration={previewDuration} setPreviewDuration={setPreviewDuration}
           />
-        </div>
+        </TabsContent>
 
-        <input
-          type="text"
-          placeholder="Genre"
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-          required
-          className="border p-2 w-full"
-        />
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="border p-2 w-full"
-        >
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-        </select>
-
-        {/* Pricing */}
-        <div className="flex gap-4">
-          <input
-            type="number"
-            placeholder="Rental Price"
-            value={rentalPrice}
-            onChange={(e) => setRentalPrice(e.target.value)}
-            className="border p-2 w-1/3"
+        <TabsContent value="seo">
+          <SeoInfo
+            seoTitle={seoTitle} setSeoTitle={setSeoTitle}
+            seoDescription={seoDescription} setSeoDescription={setSeoDescription}
+            seoKeywords={seoKeywords} setSeoKeywords={setSeoKeywords}
           />
-          <input
-            type="number"
-            placeholder="Purchase Price"
-            value={purchasePrice}
-            onChange={(e) => setPurchasePrice(e.target.value)}
-            className="border p-2 w-1/3"
-          />
-          <input
-            type="number"
-            placeholder="Rental Period (days)"
-            value={rentalPeriod}
-            onChange={(e) => setRentalPeriod(e.target.value)}
-            className="border p-2 w-1/3"
-          />
-        </div>
+        </TabsContent>
+      </Tabs>
 
-        {/* Free preview */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={freePreview}
-            onChange={(e) => setFreePreview(e.target.checked)}
-          />
-          <span>Enable Free Preview</span>
-          {freePreview && (
-            <input
-              type="number"
-              placeholder="Preview Duration (min)"
-              value={previewDuration}
-              onChange={(e) => setPreviewDuration(e.target.value)}
-              className="border p-2 w-1/4"
-            />
-          )}
-        </div>
+      {/* Actions */}
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" disabled={loading} onClick={() => submitMovie(false)}>Save as Draft</Button>
+        <Button disabled={loading} onClick={() => submitMovie(true)}>Publish Movie</Button>
+      </div>
 
-        {/* Poster */}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setPoster(e.target.files?.[0] || null)}
-        />
-
-        {/* Trailer */}
-        <input
-          type="file"
-          accept="video/*"
-          onChange={(e) => setTrailer(e.target.files?.[0] || null)}
-        />
-
-        {/* Subtitles */}
-        <input
-          type="file"
-          multiple
-          accept=".srt,.vtt"
-          onChange={(e) =>
-            setSubtitles(e.target.files ? Array.from(e.target.files) : [])
-          }
-        />
-
-        {/* Casts & Tags */}
-        <input
-          type="text"
-          placeholder="Casts (comma separated)"
-          onChange={(e) =>
-            setCasts(e.target.value.split(",").map((c) => c.trim()))
-          }
-        />
-        <input
-          type="text"
-          placeholder="Tags (comma separated)"
-          onChange={(e) =>
-            setTags(e.target.value.split(",").map((t) => t.trim()))
-          }
-        />
-
-        {/* SEO */}
-        <input
-          type="text"
-          placeholder="SEO Title"
-          value={seoTitle}
-          onChange={(e) => setSeoTitle(e.target.value)}
-          className="border p-2 w-full"
-        />
-        <input
-          type="text"
-          placeholder="SEO Description"
-          value={seoDescription}
-          onChange={(e) => setSeoDescription(e.target.value)}
-          className="border p-2 w-full"
-        />
-        <input
-          type="text"
-          placeholder="SEO Keywords"
-          value={seoKeywords}
-          onChange={(e) => setSeoKeywords(e.target.value)}
-          className="border p-2 w-full"
-        />
-
-        <button
-          type="submit"
-          disabled={uploading}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          {uploading ? "Uploading..." : "Create Movie"}
-        </button>
-      </form>
     </div>
-  );
+  )
 }
