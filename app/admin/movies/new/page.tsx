@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Upload } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import BasicInfo from "@/components/admin/movies/BasicInfo"
@@ -12,9 +12,59 @@ import SeoInfo from "@/components/admin/movies/SeoInfo"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
+/**
+ * Upload video file to Bunny CDN (NO axios, fully typed)
+ */
+const uploadVideoToBunny = (
+  uploadUrl: string,
+  file: File,
+  onProgress: (percent: number) => void
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+
+    xhr.open("PUT", uploadUrl, true)
+
+    xhr.setRequestHeader(
+      "AccessKey",
+      process.env.NEXT_PUBLIC_BUNNY_STREAM_API_KEY!
+    )
+    xhr.setRequestHeader(
+      "Content-Type",
+      "application/octet-stream"
+    )
+
+    xhr.upload.onprogress = (event: ProgressEvent<EventTarget>) => {
+      if (event.lengthComputable) {
+        const percent = Math.round(
+          (event.loaded * 100) / event.total
+        )
+        onProgress(percent)
+      }
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve()
+      } else {
+        reject(
+          new Error(`Bunny upload failed (${xhr.status})`)
+        )
+      }
+    }
+
+    xhr.onerror = () => {
+      reject(new Error("Network error during Bunny upload"))
+    }
+
+    xhr.send(file)
+  })
+}
+
 export default function NewMoviePage() {
   const [loading, setLoading] = useState(false)
   const [uploadingMovie, setUploadingMovie] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   // Basic Info
   const [title, setTitle] = useState("")
@@ -47,88 +97,90 @@ export default function NewMoviePage() {
   const [seoDescription, setSeoDescription] = useState("")
   const [seoKeywords, setSeoKeywords] = useState("")
 
-  // Add/Remove Casts
-  const addCast = () => { if (castInput.trim()) { setCasts([...casts, castInput.trim()]); setCastInput("") } }
-  const removeCast = (c: string) => setCasts(casts.filter(x => x !== c))
-
-  // Add/Remove Tags
-  const addTag = () => { if (tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput("") } }
-  const removeTag = (t: string) => setTags(tags.filter(x => x !== t))
-
-  // Upload movie to Bunny CDN
-  const uploadMovieToBunny = async (file: File): Promise<string> => {
-    const url = `https://video.bunnycdn.com/library/583613/videos`
-    const formData = new FormData()
-    formData.append("title", file.name)
-    formData.append("videoFile", file)
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "AccessKey": "319d8af4-f8a4-4570-9c9e8cdeacdc-e2e7-4a7d"
-      },
-      body: formData
-    })
-
-    if (!res.ok) {
-      const error = await res.json()
-      throw new Error(error.message || "Bunny upload failed")
+  // Helpers
+  const addCast = () => {
+    if (castInput.trim()) {
+      setCasts([...casts, castInput.trim()])
+      setCastInput("")
     }
-
-    const data = await res.json()
-    return data.guid
   }
 
-  // Submit movie
+  const removeCast = (c: string) =>
+    setCasts(casts.filter(x => x !== c))
+
+  const addTag = () => {
+    if (tagInput.trim()) {
+      setTags([...tags, tagInput.trim()])
+      setTagInput("")
+    }
+  }
+
+  const removeTag = (t: string) =>
+    setTags(tags.filter(x => x !== t))
+
+  /**
+   * SUBMIT MOVIE (Correct Bunny Flow)
+   */
   const submitMovie = async (publish = false) => {
+    if (!poster || !movie) {
+      alert("Poster and movie file are required")
+      return
+    }
+
     setLoading(true)
+
     try {
       const token = localStorage.getItem("token")
-      let bunnyVideoId: string | null = null
 
-      if (movie) {
-        setUploadingMovie(true)
-        bunnyVideoId = await uploadMovieToBunny(movie)
-        setUploadingMovie(false)
-      }
-
+      /**
+       * STEP 1: Send metadata to Laravel
+       */
       const formData = new FormData()
       formData.append("title", title)
       formData.append("description", description)
-      formData.append("release_year", releaseYear)
-      formData.append("duration", duration)
-      formData.append("language", language)
-      formData.append("genre", genre)
-      formData.append("status", publish ? "published" : status)
-      formData.append("rental_price", rentalPrice)
-      formData.append("purchase_price", purchasePrice)
-      formData.append("rental_period", rentalPeriod)
-      formData.append("free_preview", String(freePreview))
-      formData.append("preview_duration", previewDuration)
-      formData.append("seo_title", seoTitle)
-      formData.append("seo_description", seoDescription)
-      formData.append("seo_keywords", seoKeywords)
-      casts.forEach(c => formData.append("casts[]", c))
-      tags.forEach(t => formData.append("tags[]", t))
-      if (poster) formData.append("poster", poster)
-      if (trailer) formData.append("trailer", trailer)
-      subtitles.forEach(s => formData.append("subtitles[]", s))
-      if (bunnyVideoId) formData.append("bunny_video_id", bunnyVideoId)
+      formData.append("price", rentalPrice || "0")
+      formData.append("currency", "USD")
+      formData.append("category", genre)
+      formData.append("date_released", releaseYear)
+      formData.append("poster", poster)
 
-      const res = await fetch(`${API_URL}/movies`, {
+      const metaRes = await fetch(`${API_URL}/upload-movie`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       })
 
-      if (!res.ok) throw await res.json()
-      alert("Movie saved successfully 🎉")
-    } catch (err: any) {
+      if (!metaRes.ok) {
+        throw new Error("Failed to save movie metadata")
+      }
+
+      const meta = await metaRes.json()
+
+      /**
+       * STEP 2: Upload video to Bunny CDN
+       */
+      setUploadingMovie(true)
+
+      await uploadVideoToBunny(
+        meta.uploadUrl,
+        movie,
+        (percent: number) => setUploadProgress(percent)
+      )
+
+      alert("Movie uploaded successfully 🎉")
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message)
+      } else {
+        alert("Unknown upload error")
+      }
       console.error(err)
-      alert("Failed: " + (err.message || JSON.stringify(err)))
     } finally {
       setLoading(false)
       setUploadingMovie(false)
+      setUploadProgress(0)
     }
   }
 
@@ -138,7 +190,9 @@ export default function NewMoviePage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/admin/movies">
-          <Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         </Link>
         <h1 className="text-3xl font-bold">Add New Movie</h1>
       </div>
@@ -161,8 +215,16 @@ export default function NewMoviePage() {
             language={language} setLanguage={setLanguage}
             genre={genre} setGenre={setGenre}
             status={status} setStatus={setStatus}
-            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput}
-            tags={tags} addTag={addTag} removeTag={removeTag} tagInput={tagInput} setTagInput={setTagInput}
+            casts={casts}
+            addCast={addCast}
+            removeCast={removeCast}
+            castInput={castInput}
+            setCastInput={setCastInput}
+            tags={tags}
+            addTag={addTag}
+            removeTag={removeTag}
+            tagInput={tagInput}
+            setTagInput={setTagInput}
           />
         </TabsContent>
 
@@ -174,7 +236,12 @@ export default function NewMoviePage() {
             subtitles={subtitles} setSubtitles={setSubtitles}
             uploadingMovie={uploadingMovie}
           />
-          {uploadingMovie && <p className="text-sm text-muted-foreground">Uploading full movie to Bunny CDN...</p>}
+
+          {uploadingMovie && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Uploading to Bunny CDN… {uploadProgress}%
+            </p>
+          )}
         </TabsContent>
 
         <TabsContent value="pricing">
@@ -198,8 +265,12 @@ export default function NewMoviePage() {
 
       {/* Actions */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" disabled={loading} onClick={() => submitMovie(false)}>Save as Draft</Button>
-        <Button disabled={loading} onClick={() => submitMovie(true)}>Publish Movie</Button>
+        <Button variant="outline" disabled={loading} onClick={() => submitMovie(false)}>
+          Save as Draft
+        </Button>
+        <Button disabled={loading} onClick={() => submitMovie(true)}>
+          Publish Movie
+        </Button>
       </div>
 
     </div>
