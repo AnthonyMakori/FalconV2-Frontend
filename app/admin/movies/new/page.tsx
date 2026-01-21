@@ -58,7 +58,8 @@ export default function NewMoviePage() {
   // Upload video to Bunny CDN
   // -----------------------------
   const uploadVideoToBunny = async (file: File) => {
-    const url = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`
+    const url = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos` // body: formData,
+
     const formData = new FormData()
     formData.append("title", file.name)
     formData.append("file", file)
@@ -66,7 +67,6 @@ export default function NewMoviePage() {
     const response = await fetch(url, {
       method: "POST",
       headers: { AccessKey: BUNNY_ACCESS_KEY },
-      body: formData,
     })
 
     if (!response.ok) {
