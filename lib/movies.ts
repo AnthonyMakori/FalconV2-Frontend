@@ -6,7 +6,7 @@ export async function getMovies(): Promise<Movie[]> {
   return apiService.request<Movie[]>("/movies")
 }
 
-// Get single movie
+// Get single movie by ID
 export async function getMovie(id: number): Promise<Movie | null> {
   try {
     return await apiService.request<Movie>(`/movies/${id}`)
@@ -15,13 +15,13 @@ export async function getMovie(id: number): Promise<Movie | null> {
   }
 }
 
-// Genre filter (backend-driven)
-export async function getMoviesByGenre(genre: string): Promise<Movie[]> {
-  return apiService.request<Movie[]>(`/movies?genre=${genre}`)
-}
-
 // Search movies
 export async function searchMovies(query: string): Promise<Movie[]> {
   if (!query.trim()) return []
-  return apiService.request<Movie[]>(`/movies?search=${query}`)
+  return apiService.request<Movie[]>(`/movies?search=${encodeURIComponent(query)}`)
+}
+
+// Filter by genre
+export async function getMoviesByGenre(genre: string): Promise<Movie[]> {
+  return apiService.request<Movie[]>(`/movies?genre=${encodeURIComponent(genre)}`)
 }
