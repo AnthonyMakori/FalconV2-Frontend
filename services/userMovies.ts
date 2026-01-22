@@ -1,4 +1,4 @@
-import { getMovieById } from "../lib/movies"
+import { getMovieById } from "./movies"
 
 // Mock user store (same as before)
 const userDataStore: Record<
