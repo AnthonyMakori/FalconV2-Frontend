@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Star } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getImageUrl } from "@/lib/image"
 
 interface MovieCardProps {
   movie: {
@@ -22,7 +23,7 @@ export default function MovieCard({ movie, className }: MovieCardProps) {
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg movie-card-hover bg-muted">
         {movie.poster_path ? (
           <Image
-            src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+            src={getImageUrl(movie.poster_path)}
             alt={movie.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"

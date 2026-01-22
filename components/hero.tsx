@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Play, Info } from "lucide-react"
 import { getTrendingMovies } from "@/lib/tmdb"
 import { cn } from "@/lib/utils"
+import { getImageUrl } from "@/lib/image"
 
 export default function Hero() {
   const [movie, setMovie] = useState<any>(null)
@@ -41,13 +42,7 @@ export default function Hero() {
     <div className="relative w-full h-[60vh] overflow-hidden rounded-lg">
       {/* Background image */}
       <div className="absolute inset-0">
-        <Image
-          src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-          alt={movie.title}
-          fill
-          className="object-cover"
-          priority
-        />
+        <Image src={getImageUrl(movie.backdrop_path)} alt={movie.title} fill className="object-cover" priority />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-background/30" />
       </div>
 

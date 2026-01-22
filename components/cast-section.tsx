@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getImageUrl } from "@/lib/image"
 
 interface CastSectionProps {
   credits:
@@ -63,13 +64,7 @@ export default function CastSection({ credits }: CastSectionProps) {
                 <div key={person.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
                   <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
                     {person.profile_path ? (
-                      <Image
-                        src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                        alt={person.name}
-                        width={48}
-                        height={48}
-                        className="w-full h-full object-cover"
-                      />
+                      <Image src={getImageUrl(person.profile_path)} alt={person.name} width={48} height={48} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
                         <span className="text-xs text-muted-foreground">?</span>
@@ -93,13 +88,7 @@ export default function CastSection({ credits }: CastSectionProps) {
                   <div key={person.id} className="w-[120px] sm:w-[140px] lg:w-[160px] shrink-0 space-y-2">
                     <div className="overflow-hidden rounded-lg bg-muted">
                       {person.profile_path ? (
-                        <Image
-                          src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                          alt={person.name}
-                          width={160}
-                          height={240}
-                          className="w-full aspect-[2/3] object-cover"
-                        />
+                        <Image src={getImageUrl(person.profile_path)} alt={person.name} width={160} height={240} className="w-full aspect-[2/3] object-cover" />
                       ) : (
                         <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center">
                           <span className="text-muted-foreground text-xs">No image</span>

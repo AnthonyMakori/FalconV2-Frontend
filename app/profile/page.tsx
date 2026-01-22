@@ -19,6 +19,7 @@ import { getPersonalizedRecommendations } from "@/lib/recommendation-service"
 import MovieAnalyticsItem from "@/components/movie-analytics-item"
 import { motion } from "framer-motion"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
+import { getImageUrl } from "@/lib/image"
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -335,14 +336,8 @@ export default function ProfilePage() {
                   {favorites.slice(0, 12).map((movie: any) => (
                     <Link key={movie.id} href={`/movies/${movie.id}`} className="group">
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
-                        {movie.poster_path ? (
-                          <Image
-                            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                            alt={movie.title}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
-                          />
+                          {movie.poster_path ? (
+                          <Image src={getImageUrl(movie.poster_path)} alt={movie.title} fill className="object-cover transition-transform group-hover:scale-105" sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw" />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <span className="text-xs text-muted-foreground">No poster</span>
@@ -392,13 +387,7 @@ export default function ProfilePage() {
                     <Link key={movie.id} href={`/movies/${movie.id}`} className="group">
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
                         {movie.poster_path ? (
-                          <Image
-                            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                            alt={movie.title}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
-                          />
+                          <Image src={getImageUrl(movie.poster_path)} alt={movie.title} fill className="object-cover transition-transform group-hover:scale-105" sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw" />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <span className="text-xs text-muted-foreground">No poster</span>
@@ -461,14 +450,8 @@ export default function ProfilePage() {
                     <Link key={movie.id} href={`/movies/${movie.id}`} className="group">
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
                         {movie.poster_path ? (
-                          <Image
-                            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                            alt={movie.title}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
-                          />
-                        ) : (
+                            <Image src={getImageUrl(movie.poster_path)} alt={movie.title} fill className="object-cover transition-transform group-hover:scale-105" sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw" />
+                          ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <span className="text-xs text-muted-foreground">No poster</span>
                           </div>

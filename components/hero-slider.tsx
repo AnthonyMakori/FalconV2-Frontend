@@ -9,6 +9,7 @@ import { getTrendingMovies } from "@/lib/tmdb"
 import { cn } from "@/lib/utils"
 import { useFavorites } from "@/hooks/use-favorites"
 import { motion, AnimatePresence } from "framer-motion"
+import { getImageUrl } from "@/lib/image"
 
 export default function HeroSlider() {
   const [movies, setMovies] = useState<any[]>([])
@@ -75,13 +76,7 @@ export default function HeroSlider() {
           transition={{ duration: 0.5 }}
           className="absolute inset-0"
         >
-          <Image
-            src={`https://image.tmdb.org/t/p/original${currentMovie.backdrop_path}`}
-            alt={currentMovie.title}
-            fill
-            className="object-cover"
-            priority
-          />
+          <Image src={getImageUrl(currentMovie.backdrop_path)} alt={currentMovie.title} fill className="object-cover" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/10" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
         </motion.div>
