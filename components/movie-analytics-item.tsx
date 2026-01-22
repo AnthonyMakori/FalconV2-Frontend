@@ -9,7 +9,6 @@ import { Play, Star } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { getMovieDetails } from "@/lib/tmdb"
-import { getImageUrl } from "@/lib/image"
 
 interface MovieAnalyticsItemProps {
   movieId: string
@@ -93,7 +92,13 @@ export default function MovieAnalyticsItem({
 
         <div className="relative w-8 h-12 rounded overflow-hidden flex-shrink-0">
           {movie.poster_path ? (
-            <Image src={getImageUrl(movie.poster_path)} alt={movie.title} fill className="object-cover" sizes="32px" />
+            <Image
+              src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+              alt={movie.title}
+              fill
+              className="object-cover"
+              sizes="32px"
+            />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
               <span className="text-xs text-muted-foreground">No poster</span>

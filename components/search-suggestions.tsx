@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
-import { getImageUrl } from "@/lib/image"
 
 interface SearchSuggestionsProps {
   trendingMovies: any[]
@@ -94,7 +93,13 @@ export default function SearchSuggestions({ trendingMovies, popularMovies, onMov
                   <Link href={`/movies/${movie.id}`}>
                     <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
                       {movie.poster_path ? (
-                        <Image src={getImageUrl(movie.poster_path)} alt={movie.title} fill className="object-cover transition-transform duration-300 group-hover:scale-110" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw" />
+                        <Image
+                          src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                          alt={movie.title}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                        />
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center">
                           <span className="text-xs text-muted-foreground">No poster</span>
@@ -156,8 +161,14 @@ export default function SearchSuggestions({ trendingMovies, popularMovies, onMov
                   onClick={() => onMovieSearch(movie.title)}
                 >
                   <div className="relative w-12 h-16 flex-shrink-0 overflow-hidden rounded">
-                      {movie.poster_path ? (
-                      <Image src={getImageUrl(movie.poster_path)} alt={movie.title} fill className="object-cover" sizes="48px" />
+                    {movie.poster_path ? (
+                      <Image
+                        src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+                        alt={movie.title}
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
                     ) : (
                       <div className="w-full h-full bg-muted" />
                     )}
