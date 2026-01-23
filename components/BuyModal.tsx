@@ -51,7 +51,7 @@ export default function BuyModal({
           merchandise_id: item.id,
           phone,
           email,
-          amount, // ✅ whole number
+          amount, 
         }),
       })
 

@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
-
 
 type Merchandise = {
   id: number
@@ -20,9 +18,15 @@ type BuyModalProps = {
   onSuccess?: () => void
 }
 
-export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalProps) {
+export default function BuyModal({
+  item,
+  isOpen,
+  onClose,
+  onSuccess,
+}: BuyModalProps) {
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
+  const [attendeeName, setAttendeeName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -31,6 +35,7 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
     if (item) {
       setPhone("")
       setEmail("")
+      setAttendeeName("")
       setError("")
     }
   }, [item])
@@ -42,10 +47,11 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
   const handleProceed = async () => {
     const trimmedPhone = phone.trim()
     const trimmedEmail = email.trim()
+    const trimmedName = attendeeName.trim()
 
     // Validation
     if (!trimmedPhone || !trimmedEmail) {
-      setError("Please enter both phone number and email.")
+      setError("Please enter phone number and email.")
       return
     }
 
@@ -63,10 +69,11 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          event_id: item.id, 
+          event_id: item.id,
           phone: trimmedPhone,
           email: trimmedEmail,
           amount,
+          attendee_name: trimmedName || trimmedEmail.split("@")[0],
         }),
       })
 
@@ -76,12 +83,15 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
         throw new Error(data.message || "Failed to initiate payment")
       }
 
-      alert(`Payment initiated successfully!\nCheckoutRequestID: ${data.CheckoutRequestID || "N/A"}`)
+      alert(
+        `Payment initiated successfully!\n\nCheck your phone to complete the M-Pesa payment.`
+      )
 
       setPhone("")
       setEmail("")
+      setAttendeeName("")
       onClose()
-      if (onSuccess) onSuccess()
+      onSuccess?.()
     } catch (err: any) {
       setError(err.message || "Failed to initiate payment")
     } finally {
@@ -99,11 +109,22 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
 
         {/* Price */}
         <p className="mb-4 text-muted-foreground">
-          Price: <span className="font-medium">KES {amount.toLocaleString()}</span>
+          Price:{" "}
+          <span className="font-medium">
+            KES {amount.toLocaleString()}
+          </span>
         </p>
 
         {/* Inputs */}
         <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="Attendee Name (optional)"
+            value={attendeeName}
+            onChange={(e) => setAttendeeName(e.target.value)}
+            className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+
           <input
             type="text"
             placeholder="Phone Number"
@@ -111,6 +132,7 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
             onChange={(e) => setPhone(e.target.value)}
             className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />
+
           <input
             type="email"
             placeholder="Email Address"
@@ -125,11 +147,20 @@ export default function BuyModal({ item, isOpen, onClose, onSuccess }: BuyModalP
 
         {/* Actions */}
         <div className="mt-6 flex gap-3">
-          <Button className="w-full" onClick={handleProceed} disabled={loading}>
+          <Button
+            className="w-full"
+            onClick={handleProceed}
+            disabled={loading}
+          >
             {loading ? "Processing..." : "Proceed to Payment"}
           </Button>
 
-          <Button variant="outline" className="w-full" onClick={onClose} disabled={loading}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancel
           </Button>
         </div>

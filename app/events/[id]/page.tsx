@@ -7,10 +7,17 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, CalendarDays, MapPin, Info, ShoppingCart } from "lucide-react"
-import BuyModal from "@/components/EventBuyModal" 
+import {
+  ArrowLeft,
+  CalendarDays,
+  MapPin,
+  Info,
+  ShoppingCart,
+} from "lucide-react"
+import BuyModal from "@/components/EventBuyModal"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
+const IMAGE_BASE_URL = "https://api.falconeyephilmz.com"
 
 type EventType = {
   id: number
@@ -23,11 +30,15 @@ type EventType = {
   price?: string
 }
 
-export default function EventDetailsPage({ params }: { params: { id: string } }) {
+export default function EventDetailsPage({
+  params,
+}: {
+  params: { id: string }
+}) {
   const [event, setEvent] = useState<EventType | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false) 
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -38,8 +49,19 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
       try {
         const res = await fetch(`${API_URL}/events/${params.id}`)
         if (!res.ok) throw new Error("Event not found")
+
         const data = await res.json()
-        setEvent(data)
+
+        const normalizedEvent: EventType = {
+          ...data,
+          poster: data.poster
+            ? data.poster.startsWith("http")
+              ? data.poster
+              : `${IMAGE_BASE_URL}/${data.poster}`
+            : undefined,
+        }
+
+        setEvent(normalizedEvent)
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -65,12 +87,19 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
             className="object-cover"
             priority
           />
+
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
 
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <div className=" mx-start">
-              <Badge className="mb-3">{event.status || "Upcoming Event"}</Badge>
-              <h1 className="text-3xl md:text-5xl font-bold mb-2">{event.name}</h1>
+            <div>
+              <Badge className="mb-3">
+                {event.status || "Upcoming Event"}
+              </Badge>
+
+              <h1 className="text-3xl md:text-5xl font-bold mb-2">
+                {event.name}
+              </h1>
+
               {event.price && (
                 <p className="text-xl md:text-2xl font-semibold">
                   KES {parseFloat(event.price).toLocaleString()}
@@ -91,7 +120,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Image */}
+          {/* Poster */}
           {event.poster && (
             <div className="lg:col-span-1">
               <div className="relative aspect-square rounded-xl overflow-hidden shadow-lg">
@@ -108,8 +137,12 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
           {/* Details */}
           <div className="lg:col-span-2 space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-3">Event Overview</h2>
-              <p className="text-muted-foreground leading-relaxed">{event.description}</p>
+              <h2 className="text-2xl font-bold mb-3">
+                Event Overview
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {event.description}
+              </p>
             </div>
 
             <div className="flex flex-wrap gap-6 text-muted-foreground">
@@ -117,6 +150,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
                 <CalendarDays className="h-5 w-5 text-primary" />
                 {new Date(event.date).toLocaleDateString()}
               </span>
+
               <span className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
                 {event.location}
@@ -139,7 +173,11 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
                 </Button>
               )}
 
-              <Button size="lg" variant="outline" className="flex items-center gap-2">
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex items-center gap-2"
+              >
                 <Info className="h-5 w-5" />
                 More Details
               </Button>
@@ -151,7 +189,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
       {/* Buy Modal */}
       <BuyModal
         item={
-          event && event.price
+          event.price
             ? {
                 id: event.id,
                 name: event.name,
