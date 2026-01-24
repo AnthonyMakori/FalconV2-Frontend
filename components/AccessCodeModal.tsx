@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -29,8 +29,17 @@ export function AccessCodeModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (!open) {
+      setAccessCode("")
+      setError("")
+      setLoading(false)
+    }
+  }, [open])
+
   const handleVerify = async () => {
-    if (!accessCode) {
+    if (!accessCode.trim()) {
       setError("Access code is required")
       return
     }
@@ -43,7 +52,6 @@ export function AccessCodeModal({
 
       if (!token) {
         setError("You must be logged in to watch this movie.")
-        setLoading(false)
         return
       }
 
@@ -56,23 +64,28 @@ export function AccessCodeModal({
             : `Bearer ${token}`,
         },
         body: JSON.stringify({
-          access_code: accessCode,
+          access_code: accessCode.trim(),
           movie_id: movieId,
         }),
       })
 
       const data = await res.json()
 
-      if (!res.ok || !data.success) {
-        setError(data.message || "Invalid access code")
-        setLoading(false)
+      if (!res.ok) {
+        setError(data.message || "Access verification failed")
         return
       }
 
+      if (!data.success) {
+        setError(data.message || "Invalid access code")
+        return
+      }
+
+      // ✅ Access granted
       onSuccess()
       onClose()
     } catch (err) {
-      setError("Something went wrong. Please try again.")
+      setError("Network error. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -81,13 +94,11 @@ export function AccessCodeModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        {/* Move DialogTitle directly under DialogContent */}
         <DialogTitle>Enter Access Code</DialogTitle>
 
         <DialogHeader>
           <DialogDescription>
-            Please enter the access code you received after purchasing this
-            movie.
+            Enter the access code you received after purchasing this movie.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,12 +107,13 @@ export function AccessCodeModal({
             placeholder="Enter access code"
             value={accessCode}
             onChange={(e) => setAccessCode(e.target.value)}
+            disabled={loading}
           />
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleVerify} disabled={loading}>
