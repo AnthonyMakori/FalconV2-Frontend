@@ -25,31 +25,54 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Search, MoreHorizontal, Edit, Trash, Eye, Download } from "lucide-react"
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash,
+  Eye,
+  Download,
+} from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
+/* ================= TYPES ================= */
 
 interface Movie {
   id: number
   title: string
   genre: string
-  year: number
+  release_year: number
   status: string
 }
+
+interface PaginatedResponse<T> {
+  data: T[]
+  current_page: number
+  last_page: number
+  total: number
+}
+
+/* ================= PAGE ================= */
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch movies from API
+  /* ================= FETCH ================= */
+
   useEffect(() => {
     const fetchMovies = async () => {
       setLoading(true)
       setError(null)
 
-      // Retrieve token safely on client
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("token")
+          : null
+
       if (!token) {
         setError("You are not authenticated.")
         setLoading(false)
@@ -58,23 +81,23 @@ export default function MoviesPage() {
 
       try {
         const res = await fetch(`${API_URL}/movies`, {
-          method: "GET",
           headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
           },
         })
 
         if (!res.ok) {
-          const msg = await res.text()
-          throw new Error(msg || "Failed to fetch movies")
+          throw new Error(`Failed to fetch movies (${res.status})`)
         }
 
-        const data: Movie[] = await res.json()
-        setMovies(data)
+        const json: PaginatedResponse<Movie> = await res.json()
+
+        // 🔥 FIX: always extract the array
+        setMovies(Array.isArray(json.data) ? json.data : [])
       } catch (err: any) {
         console.error(err)
-        setError(err.message || "Something went wrong while fetching movies")
+        setError(err.message ?? "Something went wrong")
       } finally {
         setLoading(false)
       }
@@ -82,6 +105,8 @@ export default function MoviesPage() {
 
     fetchMovies()
   }, [])
+
+  /* ================= UI ================= */
 
   return (
     <div className="space-y-6">
@@ -98,9 +123,13 @@ export default function MoviesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Movie Management</CardTitle>
-          <CardDescription>Manage all movies on the platform</CardDescription>
+          <CardDescription>
+            Manage all movies on the platform
+          </CardDescription>
         </CardHeader>
+
         <CardContent>
+          {/* Filters */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -112,28 +141,27 @@ export default function MoviesPage() {
                   disabled
                 />
               </div>
-              <select className="appearance-none bg-card border rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary" disabled>
-                <option>All Genres</option>
-              </select>
-              <select className="appearance-none bg-card border rounded-md px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary" disabled>
-                <option>All Status</option>
-              </select>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </div>
+
+            <Button variant="outline" size="sm" disabled>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
           </div>
 
-          {loading ? (
-            <p>Loading movies...</p>
-          ) : error ? (
+          {/* STATES */}
+          {loading && <p>Loading movies...</p>}
+
+          {!loading && error && (
             <p className="text-destructive">{error}</p>
-          ) : movies.length === 0 ? (
+          )}
+
+          {!loading && !error && movies.length === 0 && (
             <p>No movies found.</p>
-          ) : (
+          )}
+
+          {/* TABLE */}
+          {!loading && !error && movies.length > 0 && (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -142,19 +170,24 @@ export default function MoviesPage() {
                     <TableHead>Genre</TableHead>
                     <TableHead>Year</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
                   {movies.map((movie) => (
                     <TableRow key={movie.id}>
-                      <TableCell className="font-medium">{movie.title}</TableCell>
+                      <TableCell className="font-medium">
+                        {movie.title}
+                      </TableCell>
                       <TableCell>{movie.genre}</TableCell>
-                      <TableCell>{movie.year}</TableCell>
+                      <TableCell>{movie.release_year}</TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            movie.status.toLowerCase() === "published"
+                            movie.status === "published"
                               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
                               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
                           }`}
@@ -167,7 +200,6 @@ export default function MoviesPage() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
                               <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -193,19 +225,14 @@ export default function MoviesPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
-              Showing <strong>1-{movies.length}</strong> of <strong>{movies.length}</strong> movies
+          {/* FOOTER */}
+          {!loading && movies.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing <strong>{movies.length}</strong> movies
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" disabled>
-                Next
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
