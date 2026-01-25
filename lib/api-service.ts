@@ -1,113 +1,120 @@
-// FalconEye API service (TMDB REMOVED)
-
-export interface Movie {
-  id: number
-  title: string
-  description: string
-  poster_path: string | null
-  movie_path: string
-  trailer_path?: string | null
-  release_year?: string
-  duration?: string
-  status?: string
-  created_at?: string
-  genre?: string
-  language?: string
-  free_preview?: boolean
-  preview_duration?: string
-  casts?: { id: number; name: string }[]
-  tags?: { id: number; name: string }[]
-  subtitles?: {
-    id: number
-    language: string | null
-    file_path: string
-  }[]
-}
-
+// Enhanced API service with caching and error handling
 class ApiService {
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
+  private readonly baseUrl = "https://api.themoviedb.org/3"
+  private readonly apiKey = "9fbedc8868a21a3e82a72025b6ace9db"
 
-  private readonly baseUrl = "https://api.falconeyephilmz.com/api"
-  private readonly storageUrl = "https://api.falconeyephilmz.com/storage"
-
-  private isValidCache(entry: { timestamp: number; ttl: number }) {
-    return Date.now() - entry.timestamp < entry.ttl
+  private getCacheKey(endpoint: string, params: Record<string, string> = {}): string {
+    const queryParams = new URLSearchParams({ api_key: this.apiKey, ...params })
+    return `${endpoint}?${queryParams.toString()}`
   }
 
-  private normalizeMovie(movie: Movie): Movie {
+  private isValidCache(cacheEntry: { timestamp: number; ttl: number }): boolean {
+    return Date.now() - cacheEntry.timestamp < cacheEntry.ttl
+  }
+
+  async request<T>(
+    endpoint: string,
+    params: Record<string, string> = {},
+    ttl: number = 60 * 60 * 1000, // 1 hour default TTL
+  ): Promise<T> {
+    const cacheKey = this.getCacheKey(endpoint, params)
+
+    // Check cache first
+    const cached = this.cache.get(cacheKey)
+    if (cached && this.isValidCache(cached)) {
+      return cached.data
+    }
+
+    try {
+      const queryParams = new URLSearchParams({
+        api_key: this.apiKey,
+        ...params,
+      })
+
+      const url = `${this.baseUrl}${endpoint}?${queryParams.toString()}`
+      console.log(`Making API request to: ${url}`)
+
+      const response = await fetch(url, {
+        next: { revalidate: ttl / 1000 }, // Convert to seconds for Next.js
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      })
+
+      console.log(`API Response status: ${response.status} for ${endpoint}`)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`API Error Details:`, {
+          status: response.status,
+          statusText: response.statusText,
+          url,
+          response: errorText,
+        })
+
+        // Handle specific error cases
+        if (response.status === 404) {
+          throw new Error(`Resource not found: ${endpoint}`)
+        } else if (response.status === 401) {
+          throw new Error(`Unauthorized: Check your API key`)
+        } else if (response.status === 429) {
+          throw new Error(`Rate limit exceeded. Please try again later.`)
+        } else {
+          throw new Error(`API error: ${response.status} ${response.statusText}`)
+        }
+      }
+
+      const data = await response.json()
+
+      // Cache the result
+      this.cache.set(cacheKey, {
+        data,
+        timestamp: Date.now(),
+        ttl,
+      })
+
+      return data
+    } catch (error) {
+      console.error(`API request failed for ${endpoint}:`, error)
+
+      // If it's a network error, provide a more user-friendly message
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        throw new Error("Network error: Please check your internet connection")
+      }
+
+      throw error
+    }
+  }
+
+  // Clear cache for specific endpoint or all
+  clearCache(endpoint?: string): void {
+    if (endpoint) {
+      const keysToDelete = Array.from(this.cache.keys()).filter((key) => key.startsWith(endpoint))
+      keysToDelete.forEach((key) => this.cache.delete(key))
+    } else {
+      this.cache.clear()
+    }
+  }
+
+  // Get cache statistics
+  getCacheStats(): { size: number; keys: string[] } {
     return {
-      ...movie,
-      poster_path: movie.poster_path
-        ? `${this.storageUrl}/${movie.poster_path}`
-        : null,
-      trailer_path: movie.trailer_path
-        ? `${this.storageUrl}/${movie.trailer_path}`
-        : null,
+      size: this.cache.size,
+      keys: Array.from(this.cache.keys()),
     }
   }
 
-  private cacheGet(key: string) {
-    const cached = this.cache.get(key)
-    if (cached && this.isValidCache(cached)) return cached.data
-    return null
-  }
-
-  private cacheSet(key: string, data: any, ttl: number) {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-      ttl,
-    })
-  }
-
-  // =========================
-  // MOVIES
-  // =========================
-
-  async getMovies(ttl = 10 * 60 * 1000): Promise<Movie[]> {
-    const cacheKey = "movies"
-
-    const cached = this.cacheGet(cacheKey)
-    if (cached) return cached
-
-    const res = await fetch(`${this.baseUrl}/movies`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: ttl / 1000 },
-    })
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch movies (${res.status})`)
+  // Test API connection
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.request("/configuration")
+      return true
+    } catch (error) {
+      console.error("API connection test failed:", error)
+      return false
     }
-
-    const data: Movie[] = await res.json()
-    const normalized = data.map(this.normalizeMovie.bind(this))
-
-    this.cacheSet(cacheKey, normalized, ttl)
-    return normalized
-  }
-
-  async getMovieById(id: number, ttl = 10 * 60 * 1000): Promise<Movie | null> {
-    const cacheKey = `movie-${id}`
-
-    const cached = this.cacheGet(cacheKey)
-    if (cached) return cached
-
-    const movies = await this.getMovies(ttl)
-    const movie = movies.find((m) => m.id === id) || null
-
-    if (movie) {
-      this.cacheSet(cacheKey, movie, ttl)
-    }
-
-    return movie
-  }
-
-  // =========================
-  // CACHE CONTROL
-  // =========================
-
-  clearCache() {
-    this.cache.clear()
   }
 }
 
