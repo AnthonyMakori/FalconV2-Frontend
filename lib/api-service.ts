@@ -9,6 +9,8 @@ export interface Movie {
   trailer_path?: string | null
   release_year?: string
   duration?: string
+  status?: string
+  created_at?: string
   genre?: string
   language?: string
   free_preview?: boolean

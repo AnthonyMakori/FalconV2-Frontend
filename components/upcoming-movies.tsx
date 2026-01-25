@@ -1,14 +1,17 @@
-import { getUpcomingMovies } from "@/lib/tmdb"
-import MovieGrid from "@/components/movie-grid"
-import SectionHeading from "@/components/section-heading"
+import MovieSection from "@/components/movie-section"
 
-export default async function UpcomingMovies() {
-  const { results } = await getUpcomingMovies()
-
+export default function UpcomingMovies() {
   return (
-    <section className="my-8">
-      <SectionHeading title="Coming Soon" description="Upcoming movie releases" viewAllHref="/upcoming" />
-      <MovieGrid movies={results.slice(0, 5)} />
-    </section>
+    <MovieSection
+      title="Upcoming"
+      limit={10}
+      filterFn={(m) =>
+        m.status === "published" &&
+        Number(m.release_year) > new Date().getFullYear()
+      }
+      sortFn={(a, b) =>
+        Number(a.release_year) - Number(b.release_year)
+      }
+    />
   )
 }

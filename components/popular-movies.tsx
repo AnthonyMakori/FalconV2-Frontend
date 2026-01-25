@@ -1,14 +1,5 @@
-import { getPopularMovies } from "@/lib/tmdb"
-import MovieGrid from "@/components/movie-grid"
-import SectionHeading from "@/components/section-heading"
+import MovieSection from "@/components/movie-section"
 
-export default async function PopularMovies() {
-  const { results } = await getPopularMovies()
-
-  return (
-    <section className="my-8">
-      <SectionHeading title="Popular Movies" description="Most watched movies by our users" viewAllHref="/popular" />
-      <MovieGrid movies={results.slice(0, 5)} />
-    </section>
-  )
+export default function PopularMovies() {
+  return <MovieSection title="Popular" limit={10} />
 }

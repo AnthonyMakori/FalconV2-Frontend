@@ -1,18 +1,5 @@
-import { getTopRatedMovies } from "@/lib/tmdb"
-import MovieGrid from "@/components/movie-grid"
-import SectionHeading from "@/components/section-heading"
+import MovieSection from "@/components/movie-section"
 
-export default async function TopRatedMovies() {
-  const { results } = await getTopRatedMovies()
-
-  return (
-    <section className="my-8">
-      <SectionHeading
-        title="Top Rated Movies"
-        description="Highest rated movies of all time"
-        viewAllHref="/top-rated"
-      />
-      <MovieGrid movies={results.slice(0, 5)} />
-    </section>
-  )
+export default function TopRatedMovies() {
+  return <MovieSection title="Top Rated" limit={10} />
 }
