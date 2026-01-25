@@ -84,7 +84,7 @@ export default function BuyModal({
       }
 
       alert(
-        `Payment initiated successfully!\n\nCheck your phone to complete the M-Pesa payment.`
+        `Payment initiated successfully!.`
       )
 
       setPhone("")

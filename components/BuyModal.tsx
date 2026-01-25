@@ -63,9 +63,7 @@ export default function BuyModal({
       const data = await res.json()
 
       alert(
-        `Payment initiated successfully!\nTransaction ID: ${
-          data.transaction_id || "N/A"
-        }`
+        `Payment initiated successfully!`
       )
 
       setPhone("")
