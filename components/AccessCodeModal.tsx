@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!
+// const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 interface AccessCodeModalProps {
   open: boolean
@@ -56,7 +56,7 @@ export function AccessCodeModal({
         return
       }
 
-      const res = await fetch(`${API_URL}/verify-access-code`, {
+      const res = await fetch(`https://api.falconeyephilmz.com/api/verify-access-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
