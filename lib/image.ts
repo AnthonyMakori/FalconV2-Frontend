@@ -1,6 +1,12 @@
-export function getImageUrl(path?: string | null) {
-  if (!path) return ""
+// lib/images.ts
+const ASSET_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+
+export function resolveMovieImage(path?: string | null) {
+  if (!path) return null
+
+  // Already a full URL
   if (path.startsWith("http")) return path
-  const base = process.env.NEXT_PUBLIC_API_URL || ""
-  return `${base}${path}`
+
+  // Backend relative path
+  return `${ASSET_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`
 }

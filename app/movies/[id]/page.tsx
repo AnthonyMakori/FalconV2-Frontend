@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: `${movie.title} (${movie.release_date?.split("-")[0] || "N/A"}) - Cynthia Movies`,
+    title: `${movie.title} (${movie.release_date?.split("-")[0] || "N/A"}) - Falcon-Eye-Movies`,
     description: movie.overview,
   }
 }

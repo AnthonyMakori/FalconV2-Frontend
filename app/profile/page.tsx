@@ -19,6 +19,7 @@ import { getPersonalizedRecommendations } from "@/lib/recommendation-service"
 import MovieAnalyticsItem from "@/components/movie-analytics-item"
 import { motion } from "framer-motion"
 import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
+import { resolveMovieImage } from "@/lib/image"
 
 export default function ProfilePage() {
   const { data: session, status } = useSession()
@@ -337,11 +338,10 @@ export default function ProfilePage() {
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
                         {movie.poster_path ? (
                           <Image
-                            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                            src={resolveMovieImage(movie.poster_path)!}
                             alt={movie.title}
                             fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -393,11 +393,10 @@ export default function ProfilePage() {
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
                         {movie.poster_path ? (
                           <Image
-                            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                            src={resolveMovieImage(movie.poster_path)!}
                             alt={movie.title}
                             fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -461,12 +460,11 @@ export default function ProfilePage() {
                     <Link key={movie.id} href={`/movies/${movie.id}`} className="group">
                       <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
                         {movie.poster_path ? (
-                          <Image
-                            src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                         <Image
+                            src={resolveMovieImage(movie.poster_path)!}
                             alt={movie.title}
                             fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 16vw"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">

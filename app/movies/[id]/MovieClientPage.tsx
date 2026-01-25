@@ -14,6 +14,8 @@ import CastSection from "@/components/cast-section"
 import MovieActions from "@/components/movie-actions"
 import SimilarMoviesClient from "@/components/similar-movies-client"
 import { startTimeTracking, stopTimeTracking, trackMovieView } from "@/lib/analytics"
+import { resolveMovieImage } from "@/lib/image"
+
 
 export default function MovieClientPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -160,13 +162,13 @@ export default function MovieClientPage({ params }: { params: { id: string } }) 
       {/* Hero Section with Backdrop */}
       <div className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] overflow-hidden">
         {movie.backdrop_path && (
-          <Image
-            src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-            alt={movie.title}
-            fill
-            className="object-cover"
-            priority
-          />
+         <Image
+          src={resolveMovieImage(movie.backdrop_path)!}
+          alt={movie.title}
+          fill
+          className="object-cover"
+          priority
+        />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
@@ -243,12 +245,11 @@ export default function MovieClientPage({ params }: { params: { id: string } }) 
             <div className="sticky top-24">
               <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl shadow-2xl">
                 {movie.poster_path ? (
-                  <Image
-                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                 <Image
+                    src={resolveMovieImage(movie.poster_path)!}
                     alt={movie.title}
                     fill
                     className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 300px"
                   />
                 ) : (
                   <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -273,11 +274,10 @@ export default function MovieClientPage({ params }: { params: { id: string } }) 
                   <div className="relative aspect-[2/3] overflow-hidden rounded-lg shadow-lg">
                     {movie.poster_path ? (
                       <Image
-                        src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                        src={resolveMovieImage(movie.poster_path)!}
                         alt={movie.title}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 640px) 128px, 160px"
                       />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
