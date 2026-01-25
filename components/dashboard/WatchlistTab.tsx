@@ -15,7 +15,8 @@ import { AccessCodeModal } from "@/components/AccessCodeModal"
 import { VideoPlayerModal } from "@/components/VideoPlayerModal"
 
 interface WatchlistItem {
-  id: number
+  id: number              // watchlist row ID
+  movie_id: number        // ✅ actual movie ID (IMPORTANT)
   title: string
   type: string
   addedOn: string
@@ -42,56 +43,63 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
         </CardHeader>
 
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {watchlist.map((item) => (
-              <div
-                key={item.id}
-                className="border rounded-lg overflow-hidden"
-              >
-                <div className="relative aspect-video">
-                  <img
-                    src={item.thumbnail || "/placeholder.svg"}
-                    alt={item.title}
-                    className="object-cover w-full h-full"
-                  />
+          {watchlist.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Your watchlist is empty
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {watchlist.map((item) => (
+                <div
+                  key={item.id}
+                  className="border rounded-lg overflow-hidden"
+                >
+                  <div className="relative aspect-video">
+                    <img
+                      src={item.thumbnail || "/placeholder.svg"}
+                      alt={item.title}
+                      className="object-cover w-full h-full"
+                    />
 
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setSelectedMovie(item)
-                          setAccessModalOpen(true)
-                        }}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        Watch
-                      </Button>
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            setSelectedMovie(item)
+                            setAccessModalOpen(true)
+                          }}
+                        >
+                          <Play className="h-4 w-4 mr-1" />
+                          Watch
+                        </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-white border-white"
-                      >
-                        Remove
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-white border-white"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3">
+                    <h4 className="font-medium truncate">
+                      {item.title}
+                    </h4>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <Badge variant="outline">{item.type}</Badge>
+                      <span>Added {item.addedOn}</span>
                     </div>
                   </div>
                 </div>
-
-                <div className="p-3">
-                  <h4 className="font-medium truncate">
-                    {item.title}
-                  </h4>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <Badge variant="outline">{item.type}</Badge>
-                    <span>Added {item.addedOn}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="flex justify-between">
@@ -110,8 +118,11 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
       {selectedMovie && (
         <AccessCodeModal
           open={accessModalOpen}
-          movieId={selectedMovie.id}
-          onClose={() => setAccessModalOpen(false)}
+          movieId={selectedMovie.movie_id}   // ✅ FIXED
+          onClose={() => {
+            setAccessModalOpen(false)
+            setSelectedMovie(null)
+          }}
           onSuccess={() => {
             setAccessModalOpen(false)
             setPlayerOpen(true)
