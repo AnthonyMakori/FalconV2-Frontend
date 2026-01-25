@@ -93,74 +93,78 @@ export function AdminDashboardContent() {
 
   return (
     <div className="space-y-6">
-      {/* --- Stats Cards --- */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Revenue (Movies) */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue (Movies)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">KES {stats.totalRevenue.toLocaleString()}</div>
-          </CardContent>
-        </Card>
+   {/* --- Stats Cards --- */}
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Total Revenue (Movies) */}
+      <Card className="lg:col-start-1 lg:row-start-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Total Revenue (Movies)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">KES {stats.totalRevenue.toLocaleString()}</div>
+        </CardContent>
+      </Card>
 
-        {/* Total Revenue (Merchandise) - below Movies */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue (Merchandise)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">KES {stats.totalMerchRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sales made from merchandise purchases
-            </p>
-          </CardContent>
-        </Card>
+      {/* Total Views */}
+      <Card className="lg:col-start-2 lg:row-start-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalViews}</div>
+        </CardContent>
+      </Card>
 
-        {/* Active Subscribers */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
-          </CardContent>
-        </Card>
+      {/* Active Subscribers */}
+      <Card className="lg:col-start-3 lg:row-start-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
+        </CardContent>
+      </Card>
 
-        {/* Total Revenue (Events) - below New Users */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue (Events)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">KES {stats.totalEventRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Sales made from event ticket purchases
-            </p>
-          </CardContent>
-        </Card>
+      {/* New Users */}
+      <Card className="lg:col-start-4 lg:row-start-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">New Users</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.newUsers}</div>
+        </CardContent>
+      </Card>
 
-        {/* Total Views */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalViews}</div>
-          </CardContent>
-        </Card>
+      {/* Total Revenue (Merchandise) */}
+      <Card className="lg:col-start-1 lg:row-start-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Total Revenue (Merchandise)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">KES {stats.totalMerchRevenue.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Sales made from merchandise purchases
+          </p>
+        </CardContent>
+      </Card>
 
-        {/* New Users */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">New Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.newUsers}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Empty space placeholder */}
+      <div className="lg:col-start-2 lg:row-start-2 lg:col-span-2"></div>
+
+      {/* Total Revenue (Events) */}
+      <Card className="lg:col-start-4 lg:row-start-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Total Revenue (Events)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">KES {stats.totalEventRevenue.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Sales made from event ticket purchases
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+
 
       {/* --- Charts --- */}
       <Tabs defaultValue="overview" className="space-y-4">
