@@ -16,7 +16,7 @@ import { VideoPlayerModal } from "@/components/VideoPlayerModal"
 
 interface WatchlistItem {
   id: number              // watchlist row ID
-  movie_id: number        // ✅ actual movie ID (IMPORTANT)
+  movie_id: number        // actual movie ID
   title: string
   type: string
   addedOn: string
@@ -61,7 +61,6 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
                       className="object-cover w-full h-full"
                     />
 
-                    {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                       <div className="flex gap-2">
                         <Button
@@ -118,14 +117,14 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
       {selectedMovie && (
         <AccessCodeModal
           open={accessModalOpen}
-          movieId={selectedMovie.movie_id}   // ✅ FIXED
+          movieId={selectedMovie.movie_id}
           onClose={() => {
             setAccessModalOpen(false)
-            setSelectedMovie(null)
+            // ❗ do NOT clear selectedMovie here
           }}
           onSuccess={() => {
             setAccessModalOpen(false)
-            setPlayerOpen(true)
+            setPlayerOpen(true) // auto-open video
           }}
         />
       )}
@@ -137,7 +136,7 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
           videoUrl={selectedMovie.video_url}
           onClose={() => {
             setPlayerOpen(false)
-            setSelectedMovie(null)
+            setSelectedMovie(null) 
           }}
         />
       )}
