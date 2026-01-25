@@ -95,14 +95,30 @@ export function AdminDashboardContent() {
     <div className="space-y-6">
       {/* --- Stats Cards --- */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Total Revenue (Movies) */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue (Movies)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">KES {stats.totalRevenue.toLocaleString()}</div>
           </CardContent>
         </Card>
+
+        {/* Total Revenue (Merchandise) - below Movies */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue (Merchandise)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">KES {stats.totalMerchRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sales made from merchandise purchases
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Active Subscribers */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
@@ -111,6 +127,21 @@ export function AdminDashboardContent() {
             <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
           </CardContent>
         </Card>
+
+        {/* Total Revenue (Events) - below New Users */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue (Events)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">KES {stats.totalEventRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sales made from event ticket purchases
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Total Views */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
@@ -119,6 +150,8 @@ export function AdminDashboardContent() {
             <div className="text-2xl font-bold">{stats.totalViews}</div>
           </CardContent>
         </Card>
+
+        {/* New Users */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">New Users</CardTitle>
