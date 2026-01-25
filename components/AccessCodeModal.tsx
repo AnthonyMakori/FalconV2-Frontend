@@ -1,6 +1,4 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -12,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-// const API_URL = process.env.NEXT_PUBLIC_API_URL!
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 interface AccessCodeModalProps {
   open: boolean
@@ -31,16 +29,8 @@ export function AccessCodeModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    if (!open) {
-      setAccessCode("")
-      setError("")
-      setLoading(false)
-    }
-  }, [open])
-
   const handleVerify = async () => {
-    if (!accessCode.trim()) {
+    if (!accessCode) {
       setError("Access code is required")
       return
     }
@@ -53,10 +43,11 @@ export function AccessCodeModal({
 
       if (!token) {
         setError("You must be logged in to watch this movie.")
+        setLoading(false)
         return
       }
 
-      const res = await fetch(`https://api.falconeyephilmz.com/api/verify-access-code`, {
+      const res = await fetch(`${API_URL}/verify-access-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +56,7 @@ export function AccessCodeModal({
             : `Bearer ${token}`,
         },
         body: JSON.stringify({
-          access_code: accessCode.trim(),
+          access_code: accessCode,
           movie_id: movieId,
         }),
       })
@@ -74,14 +65,14 @@ export function AccessCodeModal({
 
       if (!res.ok || !data.success) {
         setError(data.message || "Invalid access code")
+        setLoading(false)
         return
       }
 
       onSuccess()
       onClose()
     } catch (err) {
-      console.error("VERIFY ACCESS ERROR:", err)
-      setError("Network error. Please try again.")
+      setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -90,11 +81,13 @@ export function AccessCodeModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
+        {/* Move DialogTitle directly under DialogContent */}
         <DialogTitle>Enter Access Code</DialogTitle>
 
         <DialogHeader>
           <DialogDescription>
-            Enter the access code you received after purchasing this movie.
+            Please enter the access code you received after purchasing this
+            movie.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,13 +96,12 @@ export function AccessCodeModal({
             placeholder="Enter access code"
             value={accessCode}
             onChange={(e) => setAccessCode(e.target.value)}
-            disabled={loading}
           />
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={handleVerify} disabled={loading}>
