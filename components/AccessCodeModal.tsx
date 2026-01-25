@@ -31,7 +31,6 @@ export function AccessCodeModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Reset state when modal opens/closes
   useEffect(() => {
     if (!open) {
       setAccessCode("")
@@ -73,20 +72,15 @@ export function AccessCodeModal({
 
       const data = await res.json()
 
-      if (!res.ok) {
-        setError(data.message || "Access verification failed")
-        return
-      }
-
-      if (!data.success) {
+      if (!res.ok || !data.success) {
         setError(data.message || "Invalid access code")
         return
       }
 
-      // ✅ Access granted
       onSuccess()
       onClose()
     } catch (err) {
+      console.error("VERIFY ACCESS ERROR:", err)
       setError("Network error. Please try again.")
     } finally {
       setLoading(false)
