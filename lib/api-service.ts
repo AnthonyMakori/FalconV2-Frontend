@@ -1,8 +1,8 @@
 // Enhanced API service with caching and error handling
 class ApiService {
   private cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
-  private readonly baseUrl = "https://api.themoviedb.org/3"
-  private readonly apiKey = "9fbedc8868a21a3e82a72025b6ace9db"
+  private readonly baseUrl = "https://api.falconeyephilmz.com/api/movies"
+  private readonly apiKey = "https://api.falconeyephilmz.com/api/movies"
 
   private getCacheKey(endpoint: string, params: Record<string, string> = {}): string {
     const queryParams = new URLSearchParams({ api_key: this.apiKey, ...params })
