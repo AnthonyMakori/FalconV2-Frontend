@@ -9,6 +9,8 @@ import { Play, Star } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { getMovieDetails } from "@/lib/tmdb"
+import { resolveMovieImage } from "@/lib/image"
+
 
 interface MovieAnalyticsItemProps {
   movieId: string
@@ -90,10 +92,10 @@ export default function MovieAnalyticsItem({
       <div className="flex items-center gap-3 flex-1">
         <Badge variant="outline">#{index + 1}</Badge>
 
-        <div className="relative w-8 h-12 rounded overflow-hidden flex-shrink-0">
-          {movie.poster_path ? (
+       <div className="relative w-8 h-12 rounded overflow-hidden flex-shrink-0">
+          {resolveMovieImage(movie.poster_path) ? (
             <Image
-              src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+              src={resolveMovieImage(movie.poster_path)!}
               alt={movie.title}
               fill
               className="object-cover"
@@ -105,7 +107,6 @@ export default function MovieAnalyticsItem({
             </div>
           )}
         </div>
-
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{movie.title}</p>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

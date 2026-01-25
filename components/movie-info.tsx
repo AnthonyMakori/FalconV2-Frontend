@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useWatchlist } from "@/hooks/use-watchlist"
 import { cn } from "@/lib/utils"
+import { resolveMovieImage } from "@/lib/image"
+
 
 interface MovieInfoProps {
   movie: any
@@ -46,9 +48,9 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
     <div className="space-y-6">
       {/* Poster */}
       <div className="relative aspect-[2/3] w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
-        {movie.poster_path ? (
+        {resolveMovieImage(movie.poster_path) ? (
           <Image
-            src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+            src={resolveMovieImage(movie.poster_path)!}
             alt={movie.title}
             fill
             className="object-cover"

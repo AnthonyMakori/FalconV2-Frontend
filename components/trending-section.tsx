@@ -7,6 +7,8 @@ import { TrendingUp, Star, Calendar, Play, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
+import { resolveMovieImage } from "@/lib/image"
+
 
 interface TrendingSectionProps {
   trendingMovies: any[]
@@ -56,13 +58,16 @@ export default function TrendingSection({ trendingMovies, popularMovies }: Trend
           animate={{ opacity: 1, y: 0 }}
           className="relative h-[400px] sm:h-[500px] overflow-hidden rounded-2xl"
         >
-          <Image
-            src={`https://image.tmdb.org/t/p/original${currentMovies[0].backdrop_path}`}
-            alt={currentMovies[0].title}
-            fill
-            className="object-cover"
-            priority
-          />
+          {resolveMovieImage(currentMovies[0].backdrop_path) && (
+              <Image
+                src={resolveMovieImage(currentMovies[0].backdrop_path)!}
+                alt={currentMovies[0].title}
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
 
@@ -121,20 +126,19 @@ export default function TrendingSection({ trendingMovies, popularMovies }: Trend
           >
             <Link href={`/movies/${movie.id}`}>
               <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
-                {movie.poster_path ? (
-                  <Image
-                    src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                    alt={movie.title}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground">No poster</span>
-                  </div>
-                )}
-
+                {resolveMovieImage(movie.poster_path) ? (
+                    <Image
+                      src={resolveMovieImage(movie.poster_path)!}
+                      alt={movie.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground">No poster</span>
+                    </div>
+                  )}
                 {/* Ranking Badge */}
                 <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
                   #{index + 2}

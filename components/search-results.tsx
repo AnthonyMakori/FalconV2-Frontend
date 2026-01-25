@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion } from "framer-motion"
 import MovieGrid from "@/components/movie-grid"
 import Pagination from "@/components/pagination"
+import { resolveMovieImage } from "@/lib/image"
+
 
 interface SearchResultsProps {
   results: {
@@ -148,13 +150,17 @@ export default function SearchResults({ results, query, isLoading, page }: Searc
             >
               <Link href={`/movies/${movie.id}`} className="flex-shrink-0">
                 <div className="w-20 h-28 bg-muted rounded overflow-hidden">
-                  {movie.poster_path && (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
-                      alt={movie.title}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                  {resolveMovieImage(movie.poster_path) ? (
+                      <img
+                        src={resolveMovieImage(movie.poster_path)!}
+                        alt={movie.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                        No poster
+                      </div>
+                    )}
                 </div>
               </Link>
 
