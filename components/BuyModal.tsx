@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import OrderDetailsModal from "./OrderDetailsModal" // make sure path is correct
+import OrderDetailsModal from "./OrderDetailsModal" 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
@@ -32,47 +32,70 @@ export default function BuyModal({ item, isOpen, onClose }: BuyModalProps) {
 
   const amount = Math.round(item.price ?? 0)
 
-  const handleProceed = async () => {
-    if (!phone || !email) {
-      alert("Please enter both phone number and email")
-      return
-    }
-
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_URL}/initiate/merchandise`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchandise_id: item.id,
-          phone,
-          email,
-          amount,
-        }),
-      })
-
-      if (!res.ok) {
-        const errData = await res.json()
-        throw new Error(errData.message || "Failed to initiate payment")
-      }
-
-      const data = await res.json()
-
-      // Open Order Details Modal
-      setCurrentPaymentId(data.payment_id || null)
+  const checkPaymentStatus = async (checkoutRequestId: string) => {
+  try {
+    const res = await fetch(`${API_URL}/merchandise-payment-status/${checkoutRequestId}`)
+    const data = await res.json()
+    if (data.status === "Success") {
+      setCurrentPaymentId(data.id)
       setCurrentItemName(item.name)
       setOrderModalOpen(true)
-
-      // Clear input fields
-      setPhone("")
-      setEmail("")
-      onClose()
-    } catch (error: any) {
-      alert("Failed to initiate payment: " + (error.message || "Unknown error"))
-    } finally {
-      setLoading(false)
+      return true
+    } else if (data.status === "Failed") {
+      alert("Payment failed or cancelled")
+      return true
     }
+    return false // still pending
+  } catch (error) {
+    console.error(error)
+    return false
   }
+}
+
+const handleProceed = async () => {
+  if (!phone || !email) {
+    alert("Please enter both phone number and email")
+    return
+  }
+
+  setLoading(true)
+  try {
+    const res = await fetch(`${API_URL}/initiate/merchandise`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchandise_id: item.id,
+        phone,
+        email,
+        amount,
+      }),
+    })
+
+    if (!res.ok) {
+      const errData = await res.json()
+      throw new Error(errData.message || "Failed to initiate payment")
+    }
+
+    const data = await res.json()
+    const checkoutRequestId = data.CheckoutRequestID
+
+    // start polling every 3 seconds until payment is Success/Failed
+    const interval = setInterval(async () => {
+      const done = await checkPaymentStatus(checkoutRequestId)
+      if (done) clearInterval(interval)
+    }, 3000)
+
+    // clear inputs and close BuyModal
+    setPhone("")
+    setEmail("")
+    onClose()
+  } catch (error: any) {
+    alert("Failed to initiate payment: " + (error.message || "Unknown error"))
+  } finally {
+    setLoading(false)
+  }
+}
+
 
   return (
     <>
