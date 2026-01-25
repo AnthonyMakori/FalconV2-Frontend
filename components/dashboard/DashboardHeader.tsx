@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 export function DashboardHeader({ user }: { user: any }) {
   const profileImageUrl = user?.profile_image
-    ? `https://api.falconeyephilmz.com/storage/app/public/${user.profile_image}`
+    ? `${API_URL}/storage/app/public/${user.profile_image}`
     : "/placeholder.svg"
 
     console.log("PROFILE IMAGE URL 👉", profileImageUrl)
