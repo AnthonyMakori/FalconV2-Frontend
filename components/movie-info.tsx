@@ -10,6 +10,7 @@ import { useWatchlist } from "@/hooks/use-watchlist"
 import { cn } from "@/lib/utils"
 import { resolveMovieImage } from "@/lib/image"
 
+
 interface MovieInfoProps {
   movie: any
 }
@@ -18,6 +19,7 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
   const { favorites, toggleFavorite } = useFavorites()
   const { watchlist, toggleWatchlist } = useWatchlist()
   const [isSharing, setIsSharing] = useState(false)
+  
 
   const isFavorited = favorites.some((fav) => fav.id === movie.id)
   const isInWatchlist = watchlist.some((item) => item.id === movie.id)
@@ -32,7 +34,9 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
           url: window.location.href,
         })
       } else {
+        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(window.location.href)
+        // You could show a toast notification here
       }
     } catch (error) {
       console.error("Error sharing:", error)
@@ -41,22 +45,17 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
     }
   }
 
-  // ✅ RESOLVE IMAGE
-  const posterUrl = resolveMovieImage(movie.poster_path)
-  const backdropUrl = resolveMovieImage(movie.backdrop_path || movie.poster_path)
-
   return (
     <div className="space-y-6">
       {/* Poster */}
       <div className="relative aspect-[2/3] w-full max-w-sm mx-auto overflow-hidden rounded-lg shadow-lg">
-        {posterUrl ? (
+        {resolveMovieImage(movie.poster_path) ? (
           <Image
-            src={posterUrl}
+            src={resolveMovieImage(movie.poster_path)!}
             alt={movie.title}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 400px"
-            priority
           />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
