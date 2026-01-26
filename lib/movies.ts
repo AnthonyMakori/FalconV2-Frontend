@@ -72,7 +72,7 @@ export async function getRecommendedMovies(): Promise<Movie[]> {
 /**
  * Movie details by ID
  */
-export async function getMovieDetails(id: string): Promise<Movie | null> {
+export async function getMovieDetailsOver(id: string): Promise<Movie | null> {
   try {
     // ✅ Force inference to Movie[]
     const movies: Movie[] = await getAllMovies()
