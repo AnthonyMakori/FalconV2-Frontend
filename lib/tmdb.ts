@@ -135,31 +135,26 @@ export async function getMovieVideos(movieId: string): Promise<VideoPlayerVideo[
     const videos: VideoPlayerVideo[] = []
 
     // If trailer exists in backend
-    if (movie.trailer_path) {
-      const raw = movie.trailer_path
-
-      // Try to detect YouTube IDs/URLs
-      const ytRegex = /(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/
-      const match = raw.match(ytRegex)
-
-      if (match && match[1]) {
-        videos.push({ id: "trailer", key: match[1], name: "Trailer", type: "Trailer", site: "youtube" })
-      } else if (raw.length === 11 && /^[A-Za-z0-9_-]+$/.test(raw)) {
-        // Looks like a bare YouTube id
-        videos.push({ id: "trailer", key: raw, name: "Trailer", type: "Trailer", site: "youtube" })
-      } else {
-        // Otherwise treat as local or external direct URL
-        const trailerUrl = raw.startsWith("http") ? raw : resolveMovieTrailer(raw)
-        if (trailerUrl) {
-          videos.push({ id: "trailer", key: trailerUrl, name: "Trailer", type: "Trailer", site: "local" })
-        }
-      }
+    const trailerUrl = movie.trailer_path ? resolveMovieTrailer(movie.trailer_path) : null
+    if (trailerUrl) {
+      videos.push({
+        id: "trailer",
+        key: trailerUrl,  // ✅ now guaranteed string
+        name: "Trailer",
+        type: "Trailer",
+        site: "local", // or "bunny"
+      })
     }
 
     // If full movie exists
     if (movie.movie_path) {
-      const key = movie.movie_path.startsWith("http") ? movie.movie_path : movie.movie_path
-      videos.push({ id: "full", key, name: "Full Movie", type: "Movie", site: "local" })
+      videos.push({
+        id: "full",
+        key: movie.movie_path, 
+        name: "Full Movie",
+        type: "Movie",
+        site: "local", 
+      })
     }
 
     return videos
