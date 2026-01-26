@@ -1,4 +1,4 @@
-import { getMovieDetails } from "@/lib/movies"
+import { getMovieDetails } from "@/lib/tmdb"
 import MovieClientPage from "./MovieClientPage"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {

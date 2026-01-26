@@ -1,3 +1,4 @@
+// lib/movies.ts
 import { apiService } from "./api-service"
 
 /**
