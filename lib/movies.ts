@@ -6,9 +6,9 @@ import { apiService } from "./api-service"
 export interface Movie {
   id: number
   title: string
-  description: string
-  release_year: number
-  duration: number
+  overview: string       
+  release_date: string   
+  runtime: number 
   language: string
   genre: string
   status: string
