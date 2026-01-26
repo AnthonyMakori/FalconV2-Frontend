@@ -1,23 +1,54 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Play, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-interface VideoPlayerProps {
-  videos: {
-    id: string
-    key: string
-    name: string
-    type: string
-    site: string
-  }[]
+export interface VideoPlayerVideo {
+  id: string
+  key: string
+  name: string
+  type: string
+  site: string
 }
 
-export default function VideoPlayer({ videos }: VideoPlayerProps) {
-  const [selectedVideo, setSelectedVideo] = useState(videos[0])
+interface VideoPlayerProps {
+  videos: VideoPlayerVideo[]
+  currentIndex?: number
+  onVideoChange?: (index: number) => void
+  autoPlay?: boolean
+}
+
+export default function VideoPlayer({
+  videos,
+  currentIndex = 0,
+  onVideoChange,
+  autoPlay = false,
+}: VideoPlayerProps) {
+  const [selectedIndex, setSelectedIndex] = useState(currentIndex)
   const [isMuted, setIsMuted] = useState(false)
+
+  const selectedVideo = videos[selectedIndex]
+
+  // Sync parent index changes
+  useEffect(() => {
+    if (currentIndex !== selectedIndex) {
+      setSelectedIndex(currentIndex)
+    }
+  }, [currentIndex])
+
+  // Notify parent when selectedIndex changes
+  useEffect(() => {
+    onVideoChange?.(selectedIndex)
+  }, [selectedIndex])
+
+  // Autoplay first video
+  useEffect(() => {
+    if (autoPlay && selectedVideo) {
+      // For YouTube iframe, autoplay handled via URL
+    }
+  }, [selectedVideo, autoPlay])
 
   if (!videos || videos.length === 0) {
     return (
@@ -27,16 +58,36 @@ export default function VideoPlayer({ videos }: VideoPlayerProps) {
     )
   }
 
-  const trailers = videos.filter((video) => video.type === "Trailer")
-  const clips = videos.filter((video) => video.type === "Clip")
-  const teasers = videos.filter((video) => video.type === "Teaser")
+  const trailers = videos.filter((v) => v.type === "Trailer")
+  const clips = videos.filter((v) => v.type === "Clip")
+  const teasers = videos.filter((v) => v.type === "Teaser")
+
+  const renderVideoSection = (label: string, sectionVideos: VideoPlayerVideo[]) => {
+    if (!sectionVideos || sectionVideos.length === 0) return null
+    return (
+      <div>
+        <h4 className="text-sm font-medium mb-2 text-muted-foreground">{label}</h4>
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {sectionVideos.map((video, idx) => (
+            <VideoThumbnail
+              key={video.id}
+              video={video}
+              isSelected={video.id === selectedVideo.id}
+              onClick={() => setSelectedIndex(videos.indexOf(video))}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
       {/* Main video player */}
       <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group">
         <iframe
-          src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=0&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1`}
+          src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=${autoPlay ? 1 : 0
+            }&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1`}
           title={selectedVideo.name}
           className="w-full h-full"
           allowFullScreen
@@ -59,54 +110,9 @@ export default function VideoPlayer({ videos }: VideoPlayerProps) {
       {/* Video selection */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Current: {selectedVideo.name}</h3>
-
-        {trailers.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Trailers</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {trailers.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {clips.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Clips</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {clips.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {teasers.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Teasers</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {teasers.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {renderVideoSection("Trailers", trailers)}
+        {renderVideoSection("Clips", clips)}
+        {renderVideoSection("Teasers", teasers)}
       </div>
     </div>
   )
@@ -117,7 +123,7 @@ function VideoThumbnail({
   isSelected,
   onClick,
 }: {
-  video: any
+  video: VideoPlayerVideo
   isSelected: boolean
   onClick: () => void
 }) {

@@ -4,6 +4,21 @@ import { getMovieDetailsOver } from "@/lib/movies"
 import type { Movie } from "@/lib/movies"
 
 
+export interface Video {
+  id: string
+  title: string
+  url: string
+  type: "Trailer" | "Full" | "Clip"
+}
+export interface VideoPlayerVideo {
+  id: string
+  key: string
+  name: string
+  type: string
+  site: string
+}
+
+
 // Get trending movies with pagination
 export async function getTrendingMovies(page = 1) {
   try {
@@ -106,6 +121,49 @@ export async function getMovieCredits(id: string) {
       return null
     }
   }
+
+ /**
+ * Fetch all videos for a movie and normalize for VideoPlayer
+ */
+export async function getMovieVideos(movieId: string): Promise<VideoPlayerVideo[]> {
+  try {
+    if (!movieId) throw new Error("Invalid movie ID")
+
+    const movie = await getMovieDetailsOver(movieId)
+    if (!movie) return []
+
+    const videos: VideoPlayerVideo[] = []
+
+    // If trailer exists in backend
+    const trailerUrl = movie.trailer_path ? resolveMovieTrailer(movie.trailer_path) : null
+    if (trailerUrl) {
+      videos.push({
+        id: "trailer",
+        key: trailerUrl,  // ✅ now guaranteed string
+        name: "Trailer",
+        type: "Trailer",
+        site: "local", // or "bunny"
+      })
+    }
+
+    // If full movie exists
+    if (movie.movie_path) {
+      videos.push({
+        id: "full",
+        key: movie.movie_path, 
+        name: "Full Movie",
+        type: "Movie",
+        site: "local", 
+      })
+    }
+
+    return videos
+  } catch (error) {
+    console.error(`Failed to get videos for movie ${movieId}:`, error)
+    return []
+  }
+}
+
 // Get similar movies
     export async function getSimilarMovies(id: string) {
       try {

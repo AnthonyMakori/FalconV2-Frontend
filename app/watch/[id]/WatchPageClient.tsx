@@ -5,7 +5,8 @@ import VideoPlayer from "@/components/video-player"
 import MovieInfo from "@/components/movie-info"
 import { Skeleton } from "@/components/ui/skeleton"
 import { startTimeTracking, stopTimeTracking, trackMovieView } from "@/lib/analytics"
-import { getMovieVideos } from "@/lib/tmdb"
+import { getMovieVideos, Video, VideoPlayerVideo } from "@/lib/tmdb"
+
 
 interface WatchPageClientProps {
   movieId: string
@@ -13,17 +14,19 @@ interface WatchPageClientProps {
 }
 
 export default function WatchPageClient({ movieId, movie }: WatchPageClientProps) {
-  const [videos, setVideos] = useState<any[]>([])
+  const [videos, setVideos] = useState<VideoPlayerVideo[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+
 
   useEffect(() => {
-    // Track movie view and start time tracking for watch page
-    const initializeTracking = async () => {
+    // Track movie view and start time tracking
+    const initTracking = async () => {
       await trackMovieView(movieId)
       startTimeTracking(movieId, "watch")
     }
 
-    initializeTracking()
+    initTracking()
 
     // Fetch videos
     const fetchVideos = async () => {
@@ -39,24 +42,18 @@ export default function WatchPageClient({ movieId, movie }: WatchPageClientProps
 
     fetchVideos()
 
-    // Cleanup function to stop time tracking when component unmounts
+    // Cleanup: stop time tracking when unmounting
     return () => {
       stopTimeTracking()
     }
   }, [movieId])
 
-  // Stop time tracking when user leaves the page
+  // Stop tracking when leaving page or tab inactive
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      stopTimeTracking()
-    }
-
+    const handleBeforeUnload = () => stopTimeTracking()
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopTimeTracking()
-      } else {
-        startTimeTracking(movieId, "watch")
-      }
+      if (document.hidden) stopTimeTracking()
+      else startTimeTracking(movieId, "watch")
     }
 
     window.addEventListener("beforeunload", handleBeforeUnload)
@@ -69,10 +66,29 @@ export default function WatchPageClient({ movieId, movie }: WatchPageClientProps
     }
   }, [movieId])
 
+  // Auto-play the first video (trailer)
+  useEffect(() => {
+    if (videos.length > 0) setCurrentVideoIndex(0)
+  }, [videos])
+
+  if (loading) return <VideoPlayerSkeleton />
+
+  if (!videos || videos.length === 0)
+    return <p className="text-center text-muted-foreground">No videos available for this movie.</p>
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2">{loading ? <VideoPlayerSkeleton /> : <VideoPlayer videos={videos} />}</div>
+      {/* Video Player */}
+      <div className="lg:col-span-2">
+        <VideoPlayer
+          videos={videos}
+          currentIndex={currentVideoIndex}
+          onVideoChange={setCurrentVideoIndex}
+          autoPlay
+        />
+      </div>
 
+      {/* Movie Info */}
       <div className="lg:col-span-1">
         <MovieInfo movie={movie} />
       </div>
