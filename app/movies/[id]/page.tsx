@@ -17,7 +17,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${movie.title} (${movie.release_date?.split("-")[0] ?? "Hahahaaa"}) - Falcon-Eye-Movies`,
+    title: `${movie.title} (${movie.release_date?.split("-")[0] ?? "N/A"}) - Falcon-Eye-Movies`,
     description: movie.overview,
   }
 }
