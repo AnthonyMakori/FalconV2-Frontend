@@ -45,9 +45,8 @@ export async function getUpcomingMovies(page = 1) {
 }
 
 // Get movie details
-export async function getMovieDetails(id: string) {
+export async function getMovieDetails(id: string): Promise<Movie | null> {
   try {
-    // Validate the ID
     if (!id || id === "undefined" || id === "null") {
       throw new Error("Invalid movie ID provided")
     }
@@ -57,12 +56,14 @@ export async function getMovieDetails(id: string) {
       throw new Error("Movie ID must be a valid positive number")
     }
 
-    return await apiService.request(`/movie/${movieId}`)
+    // ✅ Explicit generic — THIS is the key fix
+    return await apiService.request<Movie>(`/movie/${movieId}`)
   } catch (error) {
     console.error(`Failed to fetch movie details for ID ${id}:`, error)
     return null
   }
 }
+
 
 // Get movie credits (cast and crew) with error handling
 export async function getMovieCredits(id: string) {

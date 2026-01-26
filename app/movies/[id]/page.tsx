@@ -1,7 +1,12 @@
 import { getMovieDetails } from "@/lib/tmdb"
 import MovieClientPage from "./MovieClientPage"
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
   const movie = await getMovieDetails(id)
 
@@ -12,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: `${movie.title} (${movie.release_date?.split("-")[0] || "N/A"}) - Falcon-Eye-Movies`,
+    title: `${movie.title} (${movie.release_date?.split("-")[0] ?? "N/A"}) - Falcon-Eye-Movies`,
     description: movie.overview,
   }
 }
