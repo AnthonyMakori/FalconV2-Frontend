@@ -19,6 +19,7 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
   const { favorites, toggleFavorite } = useFavorites()
   const { watchlist, toggleWatchlist } = useWatchlist()
   const [isSharing, setIsSharing] = useState(false)
+  
 
   const isFavorited = favorites.some((fav) => fav.id === movie.id)
   const isInWatchlist = watchlist.some((item) => item.id === movie.id)
