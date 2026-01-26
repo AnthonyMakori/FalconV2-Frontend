@@ -1,4 +1,8 @@
 import { apiService } from "./api-service"
+import { resolveMovieTrailer } from "@/lib/media"
+import { getMovieDetails } from "@/lib/movies"
+import type { Movie } from "@/lib/movies"
+
 
 // Get trending movies with pagination
 export async function getTrendingMovies(page = 1) {
@@ -41,24 +45,24 @@ export async function getUpcomingMovies(page = 1) {
 }
 
 // Get movie details
-export async function getMovieDetails(id: string) {
-  try {
-    // Validate the ID
-    if (!id || id === "undefined" || id === "null") {
-      throw new Error("Invalid movie ID provided")
-    }
+// export async function getMovieDetails(id: string) {
+//   try {
+//     // Validate the ID
+//     if (!id || id === "undefined" || id === "null") {
+//       throw new Error("Invalid movie ID provided")
+//     }
 
-    const movieId = Number.parseInt(id)
-    if (isNaN(movieId) || movieId <= 0) {
-      throw new Error("Movie ID must be a valid positive number")
-    }
+//     const movieId = Number.parseInt(id)
+//     if (isNaN(movieId) || movieId <= 0) {
+//       throw new Error("Movie ID must be a valid positive number")
+//     }
 
-    return await apiService.request(`/movie/${movieId}`)
-  } catch (error) {
-    console.error(`Failed to fetch movie details for ID ${id}:`, error)
-    return null
-  }
-}
+//     return await apiService.request(`/movie/${movieId}`)
+//   } catch (error) {
+//     console.error(`Failed to fetch movie details for ID ${id}:`, error)
+//     return null
+//   }
+// }
 
 // Get movie credits (cast and crew) with error handling
 export async function getMovieCredits(id: string) {
@@ -84,47 +88,36 @@ export async function getMovieCredits(id: string) {
   }
 }
 
-// Get movie videos
-export async function getMovieVideos(id: string) {
-  try {
-    // Validate the ID
-    if (!id || id === "undefined" || id === "null") {
-      throw new Error("Invalid movie ID provided")
-    }
+  // Get movie videos
+    export async function getMovieTrailer(id: string): Promise<string | null> {
+      try {
+        const movie = await getMovieDetails(id)
 
-    const movieId = Number.parseInt(id)
-    if (isNaN(movieId) || movieId <= 0) {
-      throw new Error("Movie ID must be a valid positive number")
-    }
+        if (!movie?.trailer_path) return null
 
-    const data = await apiService.request(`/movie/${movieId}/videos`)
-    return data.results || []
-  } catch (error) {
-    console.error(`Failed to fetch videos for movie ${id}:`, error)
-    return []
-  }
-}
+        return resolveMovieTrailer(movie.trailer_path)
+      } catch (error) {
+        console.error(`Failed to get trailer for movie ${id}:`, error)
+        return null
+      }
+    }
 
 // Get similar movies
-export async function getSimilarMovies(id: string) {
-  try {
-    // Validate the ID
-    if (!id || id === "undefined" || id === "null") {
-      throw new Error("Invalid movie ID provided")
-    }
+    export async function getSimilarMovies(id: string) {
+      try {
+        const movieId = Number(id)
+        if (!movieId) throw new Error("Invalid movie ID")
 
-    const movieId = Number.parseInt(id)
-    if (isNaN(movieId) || movieId <= 0) {
-      throw new Error("Movie ID must be a valid positive number")
-    }
+        const data = await apiService.request<{ results: Movie[] }>(
+          `/movie/${movieId}/similar`
+        )
 
-    const data = await apiService.request(`/movie/${movieId}/similar`)
-    return data.results || []
-  } catch (error) {
-    console.error(`Failed to fetch similar movies for ${id}:`, error)
-    return []
-  }
-}
+        return data.results ?? []
+      } catch (error) {
+        console.error(`Failed to fetch similar movies for ${id}:`, error)
+        return []
+      }
+    }
 
 // Search movies
 export async function searchMovies(query: string, page = 1) {
@@ -145,15 +138,16 @@ export async function searchMovies(query: string, page = 1) {
 }
 
 // Get movie genres
-export async function getGenres() {
-  try {
-    const data = await apiService.request("/genre/movie/list")
-    return data.genres || []
-  } catch (error) {
-    console.error("Failed to fetch genres:", error)
-    return []
-  }
-}
+    export async function getGenres() {
+      try {
+        const data = await apiService.request<{ genres: any[] }>("/genre/movie/list")
+        return data.genres ?? []
+      } catch (error) {
+        console.error("Failed to fetch genres:", error)
+        return []
+      }
+    }
+
 
 // Get movies by genre
 export async function getMoviesByGenre(genreId: string, page = 1) {
@@ -220,11 +214,11 @@ export async function getNowPlayingMovies() {
 }
 
 // Test API connection
-export async function testApiConnection() {
-  try {
-    return await apiService.testConnection()
-  } catch (error) {
-    console.error("API connection test failed:", error)
-    return false
-  }
-}
+// export async function testApiConnection() {
+//   try {
+//     return await apiService.testConnection()
+//   } catch (error) {
+//     console.error("API connection test failed:", error)
+//     return false
+//   }
+// }

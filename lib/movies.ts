@@ -12,21 +12,30 @@ export interface Movie {
   language: string
   genre: string
   status: string
+
   rental_price?: number
   purchase_price?: number
   rental_period?: number
+
   free_preview: boolean
   preview_duration?: number
+
   poster_path?: string
   trailer_path?: string
   movie_path?: string
   bunny_video_id?: string
+
   seo_title?: string | null
   seo_description?: string | null
   seo_keywords?: string | null
+
   casts: { id: number; name: string }[]
   tags: { id: number; name: string }[]
-  subtitles: { id: number; file_path: string; language?: string | null }[]
+  subtitles: {
+    id: number
+    file_path: string
+    language?: string | null
+  }[]
 }
 
 /**
@@ -34,7 +43,9 @@ export interface Movie {
  */
 export async function getAllMovies(): Promise<Movie[]> {
   try {
-    return await apiService.request<Movie[]>("/movies")
+    // ✅ Explicit generic ensures no `unknown` leaks
+    const movies = await apiService.request<Movie[]>("/movies")
+    return movies
   } catch (error) {
     console.error("Failed to fetch all movies:", error)
     return []
@@ -62,8 +73,10 @@ export async function getRecommendedMovies(): Promise<Movie[]> {
  */
 export async function getMovieDetails(id: string): Promise<Movie | null> {
   try {
-    const movies = await getAllMovies()
-    return movies.find(m => m.id === Number(id)) ?? null
+    // ✅ Force inference to Movie[]
+    const movies: Movie[] = await getAllMovies()
+
+    return movies.find(movie => movie.id === Number(id)) ?? null
   } catch (error) {
     console.error(`Failed to fetch movie details for ID ${id}:`, error)
     return null
@@ -76,9 +89,10 @@ export async function getMovieDetails(id: string): Promise<Movie | null> {
 export async function searchMovies(query: string): Promise<Movie[]> {
   if (!query) return []
 
-  const movies = await getAllMovies()
-  return movies.filter(m =>
-    m.title.toLowerCase().includes(query.toLowerCase())
+  const movies: Movie[] = await getAllMovies()
+
+  return movies.filter(movie =>
+    movie.title.toLowerCase().includes(query.toLowerCase())
   )
 }
 
@@ -86,9 +100,10 @@ export async function searchMovies(query: string): Promise<Movie[]> {
  * Filter movies by genre
  */
 export async function getMoviesByGenre(genre: string): Promise<Movie[]> {
-  const movies = await getAllMovies()
-  return movies.filter(m =>
-    m.genre?.toLowerCase().includes(genre.toLowerCase())
+  const movies: Movie[] = await getAllMovies()
+
+  return movies.filter(movie =>
+    movie.genre?.toLowerCase().includes(genre.toLowerCase())
   )
 }
 
@@ -96,6 +111,7 @@ export async function getMoviesByGenre(genre: string): Promise<Movie[]> {
  * Now playing (status-based)
  */
 export async function getNowPlayingMovies(): Promise<Movie[]> {
-  const movies = await getAllMovies()
-  return movies.filter(m => m.status === "published")
+  const movies: Movie[] = await getAllMovies()
+
+  return movies.filter(movie => movie.status === "published")
 }
