@@ -51,7 +51,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
         >
           <Link href={`/watch/${movie.id}`}>
             <Play className="h-5 w-5 mr-2" />
-            Watch Trailer
+            Watch Trailer ASAP
           </Link>
         </Button>
       </motion.div>

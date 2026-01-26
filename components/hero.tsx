@@ -81,7 +81,7 @@ export default function Hero() {
           <Button asChild size="lg" className="gap-2">
             <Link href={`/movies/${movie.id}`}>
               <Play className="h-5 w-5" />
-              <span>Watch Trailer nooow</span>
+              <span>Watch Trailer</span>
             </Link>
           </Button>
 

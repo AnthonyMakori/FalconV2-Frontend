@@ -213,7 +213,7 @@ export default function MovieClientPage({ params }: { params: { id: string } }) 
                 <Button asChild size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90">
                   <Link href={`/watch/${movie.id}`}>
                     <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Watch Trailer
+                    Watch Trailer now
                   </Link>
                 </Button>
 

@@ -94,7 +94,7 @@ export default function TrendingSection({ trendingMovies, popularMovies }: Trend
                 <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
                   <Link href={`/watch/${currentMovies[0].id}`}>
                     <Play className="h-5 w-5 mr-2" />
-                    Watch Trailer
+                    Watch Trailer F
                   </Link>
                 </Button>
                 <Button
