@@ -35,13 +35,20 @@ export default function VideoPlayer({ videos }: VideoPlayerProps) {
     <div className="space-y-4">
       {/* Main video player */}
       <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group">
-        <iframe
-          src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=0&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1`}
-          title={selectedVideo.name}
-          className="w-full h-full"
-          allowFullScreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        />
+        {selectedVideo.site === "youtube" ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=0&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1`}
+            title={selectedVideo.name}
+            className="w-full h-full"
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        ) : (
+          <video className="w-full h-full object-cover" controls muted={isMuted}>
+            <source src={selectedVideo.key} />
+            Your browser does not support the video tag.
+          </video>
+        )}
 
         {/* Video controls overlay */}
         <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -96,14 +103,14 @@ export default function VideoPlayer({ videos }: VideoPlayerProps) {
           <div>
             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Teasers</h4>
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {teasers.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
+                {teasers.map((video) => (
+                  <VideoThumbnail
+                    key={video.id}
+                    video={video}
+                    isSelected={selectedVideo.id === video.id}
+                    onClick={() => setSelectedVideo(video)}
+                  />
+                ))}
             </div>
           </div>
         )}
@@ -129,11 +136,18 @@ function VideoThumbnail({
         isSelected ? "ring-2 ring-primary" : "hover:scale-105",
       )}
     >
-      <img
-        src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`}
-        alt={video.name}
-        className="w-full h-full object-cover"
-      />
+      {video.site === "youtube" ? (
+        <img
+          src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`}
+          alt={video.name}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-black flex items-center justify-center text-white text-xs">
+          <span className="px-2">{video.name}</span>
+        </div>
+      )}
+
       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
       <div className="absolute inset-0 flex items-center justify-center">
         <Play className="h-6 w-6 text-white drop-shadow-lg" />
