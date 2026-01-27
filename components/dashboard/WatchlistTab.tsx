@@ -1,4 +1,7 @@
+"use client"
+
 import { useState } from "react"
+import Image from "next/image"
 import {
   Card,
   CardContent,
@@ -13,10 +16,11 @@ import { Play, Plus, ChevronRight } from "lucide-react"
 
 import { AccessCodeModal } from "@/components/AccessCodeModal"
 import { VideoPlayerModal } from "@/components/VideoPlayerModal"
+import { resolveMovieImage } from "@/lib/image"
 
 interface WatchlistItem {
-  id: number              // watchlist row ID
-  movie_id: number        // actual movie ID
+  id: number
+  movie_id: number
   title: string
   type: string
   addedOn: string
@@ -27,7 +31,6 @@ interface WatchlistItem {
 export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
   const [selectedMovie, setSelectedMovie] =
     useState<WatchlistItem | null>(null)
-
   const [accessModalOpen, setAccessModalOpen] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
 
@@ -37,9 +40,7 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
       <Card>
         <CardHeader>
           <CardTitle>Your Watchlist</CardTitle>
-          <CardDescription>
-            Movies and series you want to watch
-          </CardDescription>
+          <CardDescription>Movies and series you want to watch</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -55,11 +56,21 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
                   className="border rounded-lg overflow-hidden"
                 >
                   <div className="relative aspect-video">
-                    <img
-                      src={item.thumbnail || "/placeholder.svg"}
-                      alt={item.title}
-                      className="object-cover w-full h-full"
-                    />
+                    {item.thumbnail ? (
+                      <Image
+                        src={resolveMovieImage(item.thumbnail)!}
+                        alt={item.title}
+                        fill
+                        className="object-cover w-full h-full"
+                        sizes="100vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">
+                          No poster
+                        </span>
+                      </div>
+                    )}
 
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                       <div className="flex gap-2">
@@ -87,9 +98,7 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
                   </div>
 
                   <div className="p-3">
-                    <h4 className="font-medium truncate">
-                      {item.title}
-                    </h4>
+                    <h4 className="font-medium truncate">{item.title}</h4>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <Badge variant="outline">{item.type}</Badge>
                       <span>Added {item.addedOn}</span>
@@ -120,7 +129,6 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
           movieId={selectedMovie.movie_id}
           onClose={() => {
             setAccessModalOpen(false)
-            // ❗ do NOT clear selectedMovie here
           }}
           onSuccess={() => {
             setAccessModalOpen(false)
@@ -136,7 +144,7 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
           videoUrl={selectedMovie.video_url}
           onClose={() => {
             setPlayerOpen(false)
-            setSelectedMovie(null) 
+            setSelectedMovie(null)
           }}
         />
       )}
