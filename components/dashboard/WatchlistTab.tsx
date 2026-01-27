@@ -168,7 +168,7 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
           videoUrl={videoUrl}
           title={selectedMovie.title}
           logoSrc="/images/intro/SITE 1@3x.jpg.jpeg"
-          logoDuration={3000}
+          logoDuration={5000}
         />
       )}
     </>

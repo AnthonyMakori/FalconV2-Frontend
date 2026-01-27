@@ -194,7 +194,7 @@ export function PurchasesTab({
           videoUrl={videoUrl}
           title={selectedPurchase.title}
           logoSrc="/images/intro/SITE 1@3x.jpg.jpeg"
-          logoDuration={3000}
+          logoDuration={5000}
         />
       )}
     </>
