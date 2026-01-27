@@ -10,8 +10,8 @@ interface VideoPlayerModalProps {
   onClose: () => void
   videoUrl: string | null
   title?: string
-  logoSrc?: string
-  logoDuration?: number
+  logoSrc?: string // Intro logo
+  logoDuration?: number // Duration to show logo in ms
 }
 
 export function VideoPlayerModal({
@@ -26,56 +26,9 @@ export function VideoPlayerModal({
   const [showLogo, setShowLogo] = useState(!!logoSrc)
   const [error, setError] = useState<string | null>(null)
 
- /* --------------------------------------------------
- * Orientation lock (TypeScript-safe, no DOM lib deps)
- * -------------------------------------------------- */
-useEffect(() => {
-  if (!open) return
-
-  type OrientationLock =
-    | "any"
-    | "natural"
-    | "landscape"
-    | "portrait"
-    | "portrait-primary"
-    | "portrait-secondary"
-    | "landscape-primary"
-    | "landscape-secondary"
-
-  const orientation = screen.orientation as
-    | {
-        lock?: (orientation: OrientationLock) => Promise<void>
-        unlock?: () => void
-      }
-    | undefined
-
-  const lockOrientation = async () => {
-    try {
-      if (orientation?.lock) {
-        await orientation.lock("landscape")
-        console.log("[VideoPlayer] Orientation locked")
-      }
-    } catch (err) {
-      console.warn("[VideoPlayer] Orientation lock failed", err)
-    }
-  }
-
-  lockOrientation()
-
-  return () => {
-    try {
-      orientation?.unlock?.()
-    } catch {}
-  }
-}, [open])
-
-
-  /* --------------------------------------------------
-   * Logo animation
-   * -------------------------------------------------- */
+  // Logo animation
   useEffect(() => {
     if (!open) return
-
     if (logoSrc) {
       setShowLogo(true)
       const timer = setTimeout(() => setShowLogo(false), logoDuration)
@@ -85,9 +38,7 @@ useEffect(() => {
     }
   }, [open, logoSrc, logoDuration])
 
-  /* --------------------------------------------------
-   * Video + HLS handling
-   * -------------------------------------------------- */
+  // Video playback + HLS + error handling
   useEffect(() => {
     if (!open || !videoUrl || showLogo) return
 
@@ -99,23 +50,18 @@ useEffect(() => {
     setError(null)
 
     const onError = (e: any) => {
-      console.error("[VideoPlayer] HTML5 error:", e, video.error)
+      console.error("[VideoPlayer] HTML5 video error:", e, video.error)
       setError("Failed to play video. Please try again later.")
     }
 
-    const onCanPlay = async () => {
-      try {
-        // Request fullscreen for better rotation behavior
-        if (video.requestFullscreen) {
-          await video.requestFullscreen()
-        }
-
-        await video.play()
-        console.log("[VideoPlayer] Playback started")
-      } catch (err) {
-        console.warn("[VideoPlayer] Autoplay blocked:", err)
-        setError("Tap play to start the video.")
-      }
+    const onCanPlay = () => {
+      video
+        .play()
+        .then(() => console.log("[VideoPlayer] Video started"))
+        .catch((err) => {
+          console.error("[VideoPlayer] play() rejected:", err)
+          setError("Autoplay blocked. Please tap Play.")
+        })
     }
 
     video.addEventListener("error", onError)
@@ -125,18 +71,26 @@ useEffect(() => {
 
     if (videoUrl.endsWith(".m3u8")) {
       if (Hls.isSupported()) {
-        hls = new Hls()
-        hls.loadSource(videoUrl)
-        hls.attachMedia(video)
-
-        hls.on(Hls.Events.ERROR, (_event, data) => {
-          console.error("[VideoPlayer] HLS error:", data)
-          setError("Error loading video stream.")
-        })
+        try {
+          hls = new Hls()
+          hls.loadSource(videoUrl)
+          hls.attachMedia(video)
+          hls.on(Hls.Events.MANIFEST_PARSED, () =>
+            console.log("[VideoPlayer] HLS manifest parsed")
+          )
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            console.error("[VideoPlayer] HLS.js error:", data)
+            setError("Error loading HLS stream")
+          })
+        } catch (err) {
+          console.error("[VideoPlayer] HLS setup failed:", err)
+          setError("Error initializing video stream")
+        }
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = videoUrl
       } else {
-        setError("HLS not supported in this browser.")
+        console.error("[VideoPlayer] HLS not supported")
+        setError("HLS not supported in this browser")
       }
     } else {
       video.src = videoUrl
@@ -146,7 +100,7 @@ useEffect(() => {
       video.pause()
       video.removeEventListener("error", onError)
       video.removeEventListener("canplay", onCanPlay)
-      hls?.destroy()
+      if (hls) hls.destroy()
       video.src = ""
     }
   }, [open, videoUrl, showLogo])
@@ -154,53 +108,48 @@ useEffect(() => {
   if (!open) return null
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogPortal>
+        {/* Fullscreen wrapper */}
         <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
           {/* Logo overlay */}
           {showLogo && logoSrc && (
             <div className="absolute inset-0 flex items-center justify-center z-30">
               <img
                 src={logoSrc}
-                alt="Intro Logo"
+                alt="Company Logo"
                 className="w-56 h-auto animate-fade-in-out"
               />
             </div>
           )}
 
-          {/* Title */}
+          {/* Title overlay */}
           {title && !showLogo && (
-            <div className="absolute top-6 left-6 z-20 text-white text-2xl font-semibold drop-shadow-lg">
+            <div className="absolute top-6 left-6 text-white z-20 text-2xl font-semibold drop-shadow-lg">
               {title}
             </div>
           )}
 
-          {/* Video */}
+          {/* Video player */}
           {!showLogo && !error && (
-            <div className="w-full h-full flex items-center justify-center">
-              <video
-                ref={videoRef}
-                controls
-                playsInline
-                muted={false}
-                className="
-                  w-full h-full object-contain
-                  portrait:rotate-90
-                  portrait:w-[100vh]
-                  portrait:h-[100vw]
-                "
-              />
-            </div>
+            <video
+              ref={videoRef}
+              controls
+              autoPlay
+              playsInline
+              muted={false}
+              className="w-full h-full object-contain"
+            />
           )}
 
-          {/* Error */}
+          {/* Error message */}
           {error && !showLogo && (
-            <div className="absolute inset-0 z-40 flex items-center justify-center px-4 text-center text-white text-lg">
+            <div className="absolute inset-0 flex items-center justify-center text-white text-lg z-40 px-4 text-center">
               {error}
             </div>
           )}
 
-          {/* Close */}
+          {/* Close button */}
           <div className="absolute top-6 right-6 z-50">
             <Button variant="outline" onClick={onClose} className="text-white">
               ✕
