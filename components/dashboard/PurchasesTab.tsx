@@ -1,4 +1,7 @@
-import { useState } from "react"
+"use client"
+
+import { useState, useEffect } from "react"
+import Image from "next/image"
 import {
   Card,
   CardContent,
@@ -13,6 +16,8 @@ import { CreditCard, ChevronRight, Play } from "lucide-react"
 
 import { AccessCodeModal } from "@/components/AccessCodeModal"
 import { VideoPlayerModal } from "@/components/VideoPlayerModal"
+import { resolveMovieImage } from "@/lib/image"
+import { getMovieDetails } from "@/lib/tmdb"
 
 interface PurchaseItem {
   id: number
@@ -33,9 +38,28 @@ export function PurchasesTab({
 }) {
   const [selectedPurchase, setSelectedPurchase] =
     useState<PurchaseItem | null>(null)
-
   const [accessModalOpen, setAccessModalOpen] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
+
+  // Store full movie details including poster_path
+  const [movieDetails, setMovieDetails] = useState<Record<number, any>>({})
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      const details: Record<number, any> = {}
+      for (const item of purchases) {
+        try {
+          const data = await getMovieDetails(item.movie_id.toString())
+          if (data) details[item.id] = data
+        } catch (err) {
+          console.error(`Failed to fetch movie ${item.movie_id}:`, err)
+        }
+      }
+      setMovieDetails(details)
+    }
+
+    if (purchases.length > 0) fetchDetails()
+  }, [purchases])
 
   // TEMP: resolve video after verification (replace with secure token endpoint)
   const getVideoUrl = (movieId: number) =>
@@ -62,65 +86,71 @@ export function PurchasesTab({
                 No purchases yet
               </p>
             ) : (
-              purchases.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 border-b pb-4 last:border-0 last:pb-0"
-                >
-                  {item.thumbnail ? (
-                    <div className="relative w-[100px] h-[60px] rounded-md overflow-hidden">
-                      <img
-                        src={item.thumbnail}
-                        alt={item.title ?? "Movie"}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center w-[100px] h-[60px] bg-muted rounded-md">
-                      <CreditCard className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
+              purchases.map((item) => {
+                const movie = movieDetails[item.id]
+                const poster = movie?.poster_path || item.thumbnail
 
-                  <div className="flex-1">
-                    <h4 className="font-medium">
-                      {item.title ?? `Movie ID: ${item.movie_id}`}
-                    </h4>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      {item.type && (
-                        <Badge variant="outline" className="mr-2">
-                          {item.type}
-                        </Badge>
-                      )}
-                      <span>
-                        Purchased on{" "}
-                        {new Date(item.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="font-medium">
-                      KES {Number(item.amount).toLocaleString()}
-                    </div>
-
-                    {/* ✅ WATCH NOW FIXED */}
-                    {item.type !== "Subscription" && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="px-0 h-auto flex items-center gap-1"
-                        onClick={() => {
-                          setSelectedPurchase(item)
-                          setAccessModalOpen(true)
-                        }}
-                      >
-                        <Play className="h-4 w-4" />
-                        Watch now
-                      </Button>
+                return (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 border-b pb-4 last:border-0 last:pb-0"
+                  >
+                    {poster ? (
+                      <div className="relative w-[100px] h-[60px] rounded-md overflow-hidden">
+                        <Image
+                          src={resolveMovieImage(poster)!}
+                          alt={item.title ?? "Movie"}
+                          fill
+                          className="object-cover w-full h-full"
+                          sizes="100vw"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center w-[100px] h-[60px] bg-muted rounded-md">
+                        <CreditCard className="h-6 w-6 text-muted-foreground" />
+                      </div>
                     )}
+
+                    <div className="flex-1">
+                      <h4 className="font-medium">
+                        {item.title ?? movie?.title ?? `Movie ID: ${item.movie_id}`}
+                      </h4>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        {(item.type || movie?.media_type) && (
+                          <Badge variant="outline" className="mr-2">
+                            {item.type || movie?.media_type}
+                          </Badge>
+                        )}
+                        <span>
+                          Purchased on{" "}
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="font-medium">
+                        KES {Number(item.amount).toLocaleString()}
+                      </div>
+
+                      {item.type !== "Subscription" && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="px-0 h-auto flex items-center gap-1"
+                          onClick={() => {
+                            setSelectedPurchase(item)
+                            setAccessModalOpen(true)
+                          }}
+                        >
+                          <Play className="h-4 w-4" />
+                          Watch now
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </CardContent>
@@ -137,7 +167,6 @@ export function PurchasesTab({
         </CardFooter>
       </Card>
 
-      {/* ================= ACCESS CODE MODAL ================= */}
       {selectedPurchase && (
         <AccessCodeModal
           open={accessModalOpen}
@@ -150,7 +179,6 @@ export function PurchasesTab({
         />
       )}
 
-      {/* ================= VIDEO PLAYER ================= */}
       {selectedPurchase && (
         <VideoPlayerModal
           open={playerOpen}
