@@ -32,44 +32,55 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
   }, [movie])
 
   const handlePurchase = async () => {
-    setLoading(true)
-    setError(null)
+  setLoading(true)
+  setError(null)
 
-    if (!name || !phone) {
-      setError("Name and phone number are required.")
-      setLoading(false)
+  if (!name || !phone) {
+    setError("Name and phone number are required.")
+    setLoading(false)
+    return
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/stk/initiate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone,
+        email,
+        amount,
+        movie_id: movie.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    // Check for HTTP errors first
+    if (!response.ok) {
+      setError(data.message || `Payment initiation failed (HTTP ${response.status})`)
       return
     }
 
-    try {
-      const response = await fetch(`${API_URL}/stk/initiate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          phone,
-          email,
-          amount,
-          movie_id: movie.id,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
+    // If API returns a 'success' boolean, use it
+    if (data.success !== undefined) {
+      if (data.success) {
         setSuccess(true)
       } else {
         setError(data.message || "Payment initiation failed.")
       }
-    } catch (err: any) {
-      console.error("Purchase error:", err)
-      setError("Payment initiation failed.")
-    } finally {
-      setLoading(false)
+    } else {
+      // No 'success' boolean? assume success if HTTP 200
+      setSuccess(true)
     }
+  } catch (err: any) {
+    console.error("Purchase error:", err)
+    setError(err?.message || "Payment initiation failed.")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   const handleClose = () => {
     setSuccess(false)
