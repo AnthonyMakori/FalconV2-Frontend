@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL!
+
 interface MoviePurchaseModalProps {
   movie: any
   isOpen: boolean
@@ -40,7 +42,7 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
     }
 
     try {
-      const response = await fetch("/api/stk/initiate", {
+      const response = await fetch(`${API_URL}/stk/initiate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -106,7 +108,7 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
                 onChange={(e) => setPhone(e.target.value)}
               />
               <Input
-                placeholder="Email (optional)"
+                placeholder="Email "
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
