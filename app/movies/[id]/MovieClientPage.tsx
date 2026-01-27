@@ -20,7 +20,7 @@ import { resolveMovieImage } from "@/lib/image"
 export default function MovieClientPage({ params }: { params: { id: string } }) {
   console.log("🧩 MovieClientPage params:", params)
   console.log("🧩 Movie ID received:", params?.id)
-  
+
   const router = useRouter()
   const [movie, setMovie] = useState<any>(null)
   const [credits, setCredits] = useState<any>(null)
@@ -216,7 +216,7 @@ export default function MovieClientPage({ params }: { params: { id: string } }) 
                 <Button asChild size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90">
                   <Link href={`/watch/${movie.id}`}>
                     <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Watch Trailer now
+                    Watch Trailer
                   </Link>
                 </Button>
 
