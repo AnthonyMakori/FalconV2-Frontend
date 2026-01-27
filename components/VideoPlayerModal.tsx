@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogPortal } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import Hls from "hls.js"
 
@@ -24,8 +24,9 @@ export function VideoPlayerModal({
 }: VideoPlayerModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [showLogo, setShowLogo] = useState(!!logoSrc)
+  const [error, setError] = useState<string | null>(null)
 
-  // Handle logo animation
+  // Logo animation
   useEffect(() => {
     if (!open) return
     if (logoSrc) {
@@ -37,47 +38,59 @@ export function VideoPlayerModal({
     }
   }, [open, logoSrc, logoDuration])
 
-  // Handle video playback
+  // Video playback + HLS + error handling
   useEffect(() => {
-    if (!open || !videoUrl || showLogo) return // wait until logo disappears
+    if (!open || !videoUrl || showLogo) return
 
     const video = videoRef.current
     if (!video) return
 
-    console.log("[VideoPlayer] Attempting to play video:", videoUrl)
-
-    video.src = "" // Reset previous source
+    video.src = ""
     video.load()
+    setError(null)
 
-    const onError = (e: any) =>
+    const onError = (e: any) => {
       console.error("[VideoPlayer] HTML5 video error:", e, video.error)
-    const onCanPlay = () =>
+      setError("Failed to play video. Please try again later.")
+    }
+
+    const onCanPlay = () => {
       video
         .play()
-        .then(() => console.log("[VideoPlayer] Video started successfully"))
-        .catch((err) =>
+        .then(() => console.log("[VideoPlayer] Video started"))
+        .catch((err) => {
           console.error("[VideoPlayer] play() rejected:", err)
-        )
+          setError("Autoplay blocked. Please tap Play.")
+        })
+    }
 
     video.addEventListener("error", onError)
     video.addEventListener("canplay", onCanPlay)
 
     let hls: Hls | null = null
+
     if (videoUrl.endsWith(".m3u8")) {
       if (Hls.isSupported()) {
-        hls = new Hls()
-        hls.loadSource(videoUrl)
-        hls.attachMedia(video)
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log("[VideoPlayer] HLS manifest parsed")
-        })
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          console.error("[VideoPlayer] HLS.js error:", data)
-        })
+        try {
+          hls = new Hls()
+          hls.loadSource(videoUrl)
+          hls.attachMedia(video)
+          hls.on(Hls.Events.MANIFEST_PARSED, () =>
+            console.log("[VideoPlayer] HLS manifest parsed")
+          )
+          hls.on(Hls.Events.ERROR, (_event, data) => {
+            console.error("[VideoPlayer] HLS.js error:", data)
+            setError("Error loading HLS stream")
+          })
+        } catch (err) {
+          console.error("[VideoPlayer] HLS setup failed:", err)
+          setError("Error initializing video stream")
+        }
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = videoUrl
       } else {
         console.error("[VideoPlayer] HLS not supported")
+        setError("HLS not supported in this browser")
       }
     } else {
       video.src = videoUrl
@@ -92,42 +105,51 @@ export function VideoPlayerModal({
     }
   }, [open, videoUrl, showLogo])
 
+  if (!open) return null
+
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent
-        className="p-0 m-0 w-screen h-screen max-w-none max-h-none bg-black flex items-center justify-center overflow-hidden"
-        style={{ transform: "none" }} // override Radix centering
-      >
-        {/* Logo Animation Overlay */}
-        {showLogo && logoSrc && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black z-30">
-            <img
-              src={logoSrc}
-              alt="Company Logo"
-              className="w-56 h-auto animate-fade-in-out"
+      <DialogPortal>
+        {/* Fullscreen wrapper */}
+        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+          {/* Logo overlay */}
+          {showLogo && logoSrc && (
+            <div className="absolute inset-0 flex items-center justify-center z-30">
+              <img
+                src={logoSrc}
+                alt="Company Logo"
+                className="w-56 h-auto animate-fade-in-out"
+              />
+            </div>
+          )}
+
+          {/* Title overlay */}
+          {title && !showLogo && (
+            <div className="absolute top-6 left-6 text-white z-20 text-2xl font-semibold drop-shadow-lg">
+              {title}
+            </div>
+          )}
+
+          {/* Video player */}
+          {!showLogo && !error && (
+            <video
+              ref={videoRef}
+              controls
+              autoPlay
+              playsInline
+              muted={false}
+              className="w-full h-full object-contain"
             />
-          </div>
-        )}
+          )}
 
-        {/* Movie Title */}
-        {title && !showLogo && (
-          <div className="absolute top-6 left-6 text-white z-20 text-2xl font-semibold drop-shadow-lg">
-            {title}
-          </div>
-        )}
-
-        {/* Fullscreen Video */}
-        {!showLogo && (
-          <video
-            ref={videoRef}
-            controls
-            autoPlay
-            playsInline
-            muted={false}
-            className="absolute top-0 left-0 w-full h-full object-contain bg-black"
-          />
-        )}
-      </DialogContent>
+          {/* Error message */}
+          {error && !showLogo && (
+            <div className="absolute inset-0 flex items-center justify-center text-white text-lg z-40 px-4 text-center">
+              {error}
+            </div>
+          )}
+        </div>
+      </DialogPortal>
     </Dialog>
   )
 }
