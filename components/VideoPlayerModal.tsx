@@ -15,7 +15,7 @@ import Hls from "hls.js"
 interface VideoPlayerModalProps {
   open: boolean
   onClose: () => void
-  videoUrl: string | null // can be mp4 or m3u8
+  videoUrl: string | null
 }
 
 export function VideoPlayerModal({ open, onClose, videoUrl }: VideoPlayerModalProps) {
@@ -23,32 +23,42 @@ export function VideoPlayerModal({ open, onClose, videoUrl }: VideoPlayerModalPr
   const [isPlaying, setIsPlaying] = useState(false)
 
   useEffect(() => {
-    if (!isPlaying || !videoUrl || !videoRef.current) return
+    if (!isPlaying || !videoUrl) return
 
     const video = videoRef.current
+    if (!video) return
 
-    // If HLS
-    if (videoUrl.endsWith(".m3u8") && Hls.isSupported()) {
-      const hls = new Hls()
-      hls.loadSource(videoUrl)
-      hls.attachMedia(video)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(console.error)
-      })
-      return () => {
-        hls.destroy()
+    console.log("Starting video playback for URL:", videoUrl)
+
+    if (videoUrl.endsWith(".m3u8")) {
+      if (Hls.isSupported()) {
+        const hls = new Hls()
+        hls.loadSource(videoUrl)
+        hls.attachMedia(video)
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log("HLS manifest parsed, playing video...")
+          video.play().catch((err) => console.error("HLS play error:", err))
+        })
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error("HLS.js error:", data)
+        })
+        return () => hls.destroy()
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = videoUrl
+        video.play().catch((err) => console.error("Native HLS play error:", err))
+      } else {
+        console.error("HLS not supported in this browser")
       }
     } else {
-      // Normal mp4
+      // mp4 fallback
       video.src = videoUrl
-      video.play().catch(console.error)
+      video.play().catch((err) => console.error("MP4 play error:", err))
     }
   }, [isPlaying, videoUrl])
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="p-0 bg-black max-w-screen h-screen flex items-center justify-center">
-        {/* Accessibility */}
         <DialogTitle className="sr-only">Movie Player</DialogTitle>
         <DialogDescription className="sr-only">
           Plays the selected movie
