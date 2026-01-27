@@ -107,11 +107,21 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
 
         /* 🎥 Cinematic logo animation */
-        "logo-cinematic": "logo-cinematic 3.2s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+        "logo-cinematic":
+          "logo-cinematic 3.2s cubic-bezier(0.4, 0, 0.2, 1) forwards",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+
+  plugins: [
+    require("tailwindcss-animate"),
+
+    /* 📱 Orientation variants (for video auto-rotate) */
+    ({ addVariant }: any) => {
+      addVariant("portrait", "@media (orientation: portrait)")
+      addVariant("landscape", "@media (orientation: landscape)")
+    },
+  ],
 } satisfies Config
 
 export default config
