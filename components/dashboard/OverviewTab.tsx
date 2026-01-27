@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Clock, Heart, ShoppingCart } from "lucide-react"
@@ -8,7 +9,7 @@ import { ContinueWatching } from "./ContinueWatching"
 import { UpcomingEvents } from "./UpcomingEvents"
 import { VideoPlayerModal } from "@/components/VideoPlayerModal"
 import { resolveMovieImage } from "@/lib/image"
-import Image from "next/image"
+import { getMovieDetails } from "@/lib/tmdb"
 
 export function OverviewTab({
   totalSpent = 0,
@@ -27,6 +28,32 @@ export function OverviewTab({
 }) {
   const [playerOpen, setPlayerOpen] = useState(false)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+
+  // Store full movie details for continueWatching items
+  const [continueWatchingDetails, setContinueWatchingDetails] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      const results: any[] = []
+
+      await Promise.all(
+        continueWatching.map(async (item) => {
+          try {
+            const data = await getMovieDetails(item.movie_id.toString())
+            if (data) results.push({ ...item, poster_path: data.poster_path })
+            else results.push(item) // fallback to original item if fetch fails
+          } catch (err) {
+            console.error(`Failed to fetch movie ${item.movie_id}:`, err)
+            results.push(item)
+          }
+        })
+      )
+
+      setContinueWatchingDetails(results)
+    }
+
+    if (continueWatching.length > 0) fetchMovies()
+  }, [continueWatching])
 
   const getVideoUrl = (movieId: number) =>
     `${process.env.NEXT_PUBLIC_API_URL}/movies/${movieId}/stream`
@@ -47,9 +74,7 @@ export function OverviewTab({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{watchHistoryCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Movies watched this month
-            </p>
+            <p className="text-xs text-muted-foreground">Movies watched this month</p>
           </CardContent>
           <CardFooter>
             <Button variant="ghost" size="sm" className="w-full">
@@ -65,9 +90,7 @@ export function OverviewTab({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{watchlistCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Items in your watchlist
-            </p>
+            <p className="text-xs text-muted-foreground">Items in your watchlist</p>
           </CardContent>
           <CardFooter>
             <Button variant="ghost" size="sm" className="w-full">
@@ -85,9 +108,7 @@ export function OverviewTab({
             <div className="text-2xl font-bold">
               KES {(totalSpent ?? 0).toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Total spent this month
-            </p>
+            <p className="text-xs text-muted-foreground">Total spent this month</p>
           </CardContent>
           <CardFooter>
             <Button variant="ghost" size="sm" className="w-full">
@@ -102,7 +123,7 @@ export function OverviewTab({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
           <ContinueWatching
-            data={continueWatching ?? []}
+            data={continueWatchingDetails ?? []}
             onPlay={(movieId: number) => handleResume(movieId)}
           />
         </div>
