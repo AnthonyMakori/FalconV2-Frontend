@@ -10,8 +10,8 @@ interface VideoPlayerModalProps {
   onClose: () => void
   videoUrl: string | null
   title?: string
-  logoSrc?: string // Your intro logo
-  logoDuration?: number // How long to show logo in ms
+  logoSrc?: string // Intro logo
+  logoDuration?: number // Duration to show logo in ms
 }
 
 export function VideoPlayerModal({
@@ -20,15 +20,14 @@ export function VideoPlayerModal({
   videoUrl,
   title,
   logoSrc,
-  logoDuration = 3000, // default 3 seconds
+  logoDuration = 3000,
 }: VideoPlayerModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [showLogo, setShowLogo] = useState(!!logoSrc)
 
-  // Handle logo animation timing
+  // Handle logo animation
   useEffect(() => {
     if (!open) return
-
     if (logoSrc) {
       setShowLogo(true)
       const timer = setTimeout(() => setShowLogo(false), logoDuration)
@@ -84,27 +83,27 @@ export function VideoPlayerModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="p-0 bg-black max-w-screen h-screen flex flex-col items-center justify-center relative">
+      <DialogContent className="p-0 bg-black w-screen h-screen flex flex-col items-center justify-center relative overflow-hidden">
         
         {/* Logo Animation Overlay */}
         {showLogo && logoSrc && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black z-20">
+          <div className="absolute inset-0 flex items-center justify-center bg-black z-30">
             <img
               src={logoSrc}
               alt="Company Logo"
-              className="w-48 h-auto animate-fade-in-out"
+              className="w-56 h-auto animate-fade-in-out"
             />
           </div>
         )}
 
         {/* Movie Title */}
         {title && !showLogo && (
-          <div className="absolute top-4 left-4 text-white z-10 text-xl font-semibold drop-shadow-lg">
+          <div className="absolute top-6 left-6 text-white z-20 text-2xl font-semibold drop-shadow-lg">
             {title}
           </div>
         )}
 
-        {/* Video Player */}
+        {/* Full-screen Video Player */}
         {!showLogo && (
           <video
             ref={videoRef}
@@ -112,13 +111,13 @@ export function VideoPlayerModal({
             autoPlay
             playsInline
             muted={false}
-            className="w-full h-full object-contain bg-black"
+            className="w-screen h-screen object-contain bg-black"
           />
         )}
 
         {/* Close Button */}
-        <div className="absolute top-4 right-4 z-10">
-          <Button variant="outline" onClick={onClose}>
+        <div className="absolute top-6 right-6 z-20">
+          <Button variant="outline" onClick={onClose} className="text-white">
             ✕
           </Button>
         </div>
