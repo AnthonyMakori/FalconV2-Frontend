@@ -169,31 +169,34 @@ export function PurchasesTab({
         </CardFooter>
       </Card>
 
-    {selectedPurchase && (
-      <AccessCodeModal
-        open={accessModalOpen}
-        movieId={selectedPurchase.movie_id}
-        onClose={() => setAccessModalOpen(false)}
-        onSuccess={(url) => {
-          console.log("Received video URL:", url)
-          setVideoUrl(url)
-          setAccessModalOpen(false)
-          setPlayerOpen(true)
-        }}
-      />
-    )}
+   {selectedPurchase && (
+        <AccessCodeModal
+          open={accessModalOpen}
+          movieId={selectedPurchase.movie_id}
+          onClose={() => setAccessModalOpen(false)}
+          onSuccess={(url) => {
+            console.log("Received video URL:", url)
+            setVideoUrl(url)
+            setAccessModalOpen(false)
+            setPlayerOpen(true)
+          }}
+        />
+      )}
 
-    {selectedPurchase && videoUrl && (
-      <VideoPlayerModal
-        open={playerOpen}
-        videoUrl={videoUrl} 
-        onClose={() => {
-          setPlayerOpen(false)
-          setSelectedPurchase(null)
-          setVideoUrl(null)
-        }}
-      />
-    )}
+      {selectedPurchase && videoUrl && (
+        <VideoPlayerModal
+          open={playerOpen}
+          onClose={() => {
+            setPlayerOpen(false)
+            setSelectedPurchase(null)
+            setVideoUrl(null)
+          }}
+          videoUrl={videoUrl}
+          title={selectedPurchase.title}
+          logoSrc="/images/intro/SITE 1@3x.jpg.jpeg"
+          logoDuration={3000}
+        />
+      )}
     </>
   )
 }

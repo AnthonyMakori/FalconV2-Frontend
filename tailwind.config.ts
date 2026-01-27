@@ -68,10 +68,19 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+
+        // 🔹 Netflix-style logo animation
+        "fade-in-out": {
+          "0%, 100%": { opacity: "0", transform: "scale(0.8)" },
+          "50%": { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+
+        // 🔹 Logo animation with 3s default duration
+        "fade-in-out": "fade-in-out 3s ease-in-out forwards",
       },
     },
   },

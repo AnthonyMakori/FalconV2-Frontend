@@ -31,11 +31,10 @@ interface WatchlistItem {
 
 export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
   const [selectedMovie, setSelectedMovie] = useState<WatchlistItem | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [accessModalOpen, setAccessModalOpen] = useState(false)
-  const [videoUrl, setVideoUrl] = useState<string | null>(null)
 
-  // Store full movie details including poster_path
   const [movieDetails, setMovieDetails] = useState<Record<number, any>>({})
 
   useEffect(() => {
@@ -51,7 +50,6 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
       }
       setMovieDetails(details)
     }
-
     if (watchlist.length > 0) fetchDetails()
   }, [watchlist])
 
@@ -143,30 +141,34 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
         </CardFooter>
       </Card>
 
+      {/* Access Code Modal */}
       {selectedMovie && (
         <AccessCodeModal
           open={accessModalOpen}
           movieId={selectedMovie.movie_id}
           onClose={() => setAccessModalOpen(false)}
           onSuccess={(url) => {
-            console.log("Received video URL:", url) 
-            setVideoUrl(url)          
+            console.log("Received video URL:", url)
+            setVideoUrl(url)
             setAccessModalOpen(false)
             setPlayerOpen(true)
           }}
         />
       )}
 
-
+      {/* Video Player Modal */}
       {selectedMovie && videoUrl && (
         <VideoPlayerModal
           open={playerOpen}
-          videoUrl={videoUrl}
           onClose={() => {
             setPlayerOpen(false)
             setSelectedMovie(null)
-            setVideoUrl(null) 
+            setVideoUrl(null)
           }}
+          videoUrl={videoUrl}
+          title={selectedMovie.title}
+          logoSrc="/images/intro/SITE 1@3x.jpg.jpeg"
+          logoDuration={3000}
         />
       )}
     </>
