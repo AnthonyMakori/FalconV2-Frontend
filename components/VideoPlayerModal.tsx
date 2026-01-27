@@ -148,6 +148,13 @@ export function VideoPlayerModal({
               {error}
             </div>
           )}
+
+          {/* Close button */}
+          <div className="absolute top-6 right-6 z-50">
+            <Button variant="outline" onClick={onClose} className="text-white">
+              ✕
+            </Button>
+          </div>
         </div>
       </DialogPortal>
     </Dialog>
