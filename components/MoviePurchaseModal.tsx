@@ -1,153 +1,131 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL!
-
-interface Movie {
-  id: number
-  title: string
-  price: number
-}
+import { Input } from "@/components/ui/input"
 
 interface MoviePurchaseModalProps {
-  movie: Movie | null
+  movie: any
   isOpen: boolean
   onClose: () => void
-  onSuccess?: () => void
 }
 
-export default function MoviePurchaseModal({
-  movie,
-  isOpen,
-  onClose,
-  onSuccess,
-}: MoviePurchaseModalProps) {
+export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurchaseModalProps) {
+  const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
-  const [name, setName] = useState("")
+  const [amount, setAmount] = useState<number>(0)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
-  // Reset fields when modal opens
+  // Set purchase price dynamically from the movie object
   useEffect(() => {
-    if (movie) {
-      setPhone("")
-      setEmail("")
-      setName("")
-      setError("")
+    if (movie?.purchase_price) {
+      setAmount(Number(movie.purchase_price))
+    } else {
+      setAmount(0)
     }
   }, [movie])
 
-  if (!isOpen || !movie) return null
-
-  const amount = Math.round(movie.price ?? 0)
-
-  const handlePayment = async () => {
-    const trimmedPhone = phone.trim()
-    const trimmedEmail = email.trim()
-    const trimmedName = name.trim()
-
-    // Validation
-    if (!trimmedPhone || !trimmedEmail) {
-      setError("Please enter phone number and email.")
-      return
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(trimmedEmail)) {
-      setError("Please enter a valid email address.")
-      return
-    }
-
-    setError("")
+  const handlePurchase = async () => {
     setLoading(true)
+    setError(null)
+
+    if (!name || !phone) {
+      setError("Name and phone number are required.")
+      setLoading(false)
+      return
+    }
 
     try {
-      const res = await fetch(`${API_URL}/stk/initiate`, {
+      const response = await fetch("/api/stk/initiate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          movie_id: movie.id,
-          phone: trimmedPhone,
-          email: trimmedEmail,
+          name,
+          phone,
+          email,
           amount,
-          name: trimmedName || trimmedEmail.split("@")[0],
+          movie_id: movie.id,
         }),
       })
 
-      const data = await res.json()
+      const data = await response.json()
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to initiate payment")
+      if (response.ok && data.success) {
+        setSuccess(true)
+      } else {
+        setError(data.message || "Payment initiation failed.")
       }
-
-      alert("Payment initiated successfully. Please complete the STK prompt on your phone.")
-
-      // Reset
-      setPhone("")
-      setEmail("")
-      setName("")
-      onClose()
-      onSuccess?.()
     } catch (err: any) {
-      setError(err.message || "Failed to initiate payment")
+      console.error("Purchase error:", err)
+      setError("Payment initiation failed.")
     } finally {
       setLoading(false)
     }
   }
 
+  const handleClose = () => {
+    setSuccess(false)
+    setError(null)
+    onClose()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative w-96 rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="mb-2 text-xl font-bold text-primary">Purchase {movie.title}</h2>
-        <p className="mb-4 text-muted-foreground">
-          Price: <span className="font-medium">KES {amount.toLocaleString()}</span>
-        </p>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Purchase "{movie?.title}"</DialogTitle>
+          <DialogDescription>
+            Enter your details below to complete the purchase. Price: <strong>KES {amount}</strong>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="Name (optional)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <input
-            type="text"
-            placeholder="Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          {error && <p className="text-sm text-red-500">{error}</p>}
-        </div>
+        <div className="space-y-3 mt-4">
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {success && (
+            <p className="text-green-500 text-sm">
+              Payment request sent! Check your phone to complete the payment.
+            </p>
+          )}
 
-        <div className="mt-6 flex gap-3">
-          <Button className="w-full" onClick={handlePayment} disabled={loading}>
-            {loading ? "Processing..." : "Proceed to Payment"}
+          {!success && (
+            <>
+              <Input
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <Input
+                placeholder="Phone Number (e.g., 2547XXXXXXXX)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <Input
+                placeholder="Email (optional)"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
+              <Button
+                onClick={handlePurchase}
+                disabled={loading || amount <= 0}
+                className="w-full mt-2"
+              >
+                {loading ? "Processing..." : `Pay KES ${amount}`}
+              </Button>
+            </>
+          )}
+
+          <Button variant="outline" className="w-full" onClick={handleClose}>
+            Close
           </Button>
-          <Button variant="outline" className="w-full" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
         </div>
-
-        <button
-          onClick={onClose}
-          disabled={loading}
-          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
