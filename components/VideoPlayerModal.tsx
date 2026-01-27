@@ -1,7 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useEffect, useRef } from "react"
 import Hls from "hls.js"
 
@@ -26,12 +23,16 @@ export function VideoPlayerModal({
 
     let hls: Hls | null = null
 
-    const playVideo = () => {
+    const playVideo = async () => {
+      // ⚡ Mute for autoplay
+      video.muted = true
+
       if (videoUrl.endsWith(".m3u8")) {
         if (video.canPlayType("application/vnd.apple.mpegurl")) {
           // Safari native HLS
           video.src = videoUrl
         } else if (Hls.isSupported()) {
+          // HLS.js for Chrome/Firefox/Edge
           hls = new Hls()
           hls.loadSource(videoUrl)
           hls.attachMedia(video)
@@ -40,22 +41,31 @@ export function VideoPlayerModal({
           return
         }
       } else {
-        // Normal MP4 fallback
+        // MP4 fallback
         video.src = videoUrl
       }
 
-      video.play().catch((err) => {
-        console.warn("Autoplay failed, user interaction required:", err)
+      try {
+        await video.play()
+        console.log("Video autoplayed successfully")
+      } catch (err) {
+        console.warn("Autoplay blocked, user interaction required:", err)
+      }
+
+      // ⚡ Optional: unmute after user interacts
+      video.addEventListener("click", () => {
+        if (video.muted) {
+          video.muted = false
+        }
       })
     }
 
+    // Delay slightly to ensure dialog renders fully
     const timer = setTimeout(playVideo, 100)
 
     return () => {
       clearTimeout(timer)
-      if (hls) {
-        hls.destroy()
-      }
+      if (hls) hls.destroy()
       video.pause()
       video.src = ""
     }
@@ -68,6 +78,7 @@ export function VideoPlayerModal({
           ref={videoRef}
           controls
           playsInline
+          muted // ⚡ important for autoplay
           className="w-full h-full object-contain bg-black"
         />
       </DialogContent>
