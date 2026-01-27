@@ -46,13 +46,18 @@ export function VideoPlayerModal({
 
     console.log("[VideoPlayer] Attempting to play video:", videoUrl)
 
-    video.src = ""
+    video.src = "" // Reset previous source
     video.load()
 
     const onError = (e: any) =>
       console.error("[VideoPlayer] HTML5 video error:", e, video.error)
     const onCanPlay = () =>
-      video.play().catch(err => console.error("[VideoPlayer] play() rejected:", err))
+      video
+        .play()
+        .then(() => console.log("[VideoPlayer] Video started successfully"))
+        .catch((err) =>
+          console.error("[VideoPlayer] play() rejected:", err)
+        )
 
     video.addEventListener("error", onError)
     video.addEventListener("canplay", onCanPlay)
@@ -63,6 +68,12 @@ export function VideoPlayerModal({
         hls = new Hls()
         hls.loadSource(videoUrl)
         hls.attachMedia(video)
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log("[VideoPlayer] HLS manifest parsed")
+        })
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error("[VideoPlayer] HLS.js error:", data)
+        })
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = videoUrl
       } else {
@@ -83,41 +94,40 @@ export function VideoPlayerModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-  <DialogContent
-    className="p-0 bg-black fixed inset-0 w-full h-full max-w-full max-h-full flex items-center justify-center overflow-hidden"
-    style={{ padding: 0 }} // ensure no default padding
-  >
-    {/* Logo Animation Overlay */}
-    {showLogo && logoSrc && (
-      <div className="absolute inset-0 flex items-center justify-center bg-black z-30">
-        <img
-          src={logoSrc}
-          alt="Company Logo"
-          className="w-56 h-auto animate-fade-in-out"
-        />
-      </div>
-    )}
+      <DialogContent
+        className="p-0 m-0 w-screen h-screen max-w-none max-h-none bg-black flex items-center justify-center overflow-hidden"
+        style={{ transform: "none" }} // override Radix centering
+      >
+        {/* Logo Animation Overlay */}
+        {showLogo && logoSrc && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black z-30">
+            <img
+              src={logoSrc}
+              alt="Company Logo"
+              className="w-56 h-auto animate-fade-in-out"
+            />
+          </div>
+        )}
 
-    {/* Movie Title */}
-    {title && !showLogo && (
-      <div className="absolute top-6 left-6 text-white z-20 text-2xl font-semibold drop-shadow-lg">
-        {title}
-      </div>
-    )}
+        {/* Movie Title */}
+        {title && !showLogo && (
+          <div className="absolute top-6 left-6 text-white z-20 text-2xl font-semibold drop-shadow-lg">
+            {title}
+          </div>
+        )}
 
-    {/* Full-screen Video Player */}
-    {!showLogo && (
-      <video
-        ref={videoRef}
-        controls
-        autoPlay
-        playsInline
-        muted={false}
-        className="absolute top-0 left-0 w-full h-full object-contain bg-black"
-      />
-    )}
-  </DialogContent>
-</Dialog>
-
+        {/* Fullscreen Video */}
+        {!showLogo && (
+          <video
+            ref={videoRef}
+            controls
+            autoPlay
+            playsInline
+            muted={false}
+            className="absolute top-0 left-0 w-full h-full object-contain bg-black"
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }
