@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Heart, Bookmark, Share2, Banknote } from "lucide-react"
+import { Heart, Bookmark, Share2, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useWatchlist } from "@/hooks/use-watchlist"
@@ -50,7 +50,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
           className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90"
         >
           <Link href={`/watch/${movie.id}`}>
-            <Banknote className="h-5 w-5 mr-2" />
+            <DollarSign className="h-5 w-5 mr-2" />
             Purchase Movie
           </Link>
         </Button>
