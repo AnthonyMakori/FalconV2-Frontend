@@ -19,32 +19,40 @@ export function VideoPlayerModal({
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
+    if (!open) return
+
     const video = videoRef.current
-    if (!video || !open) return
+    if (!video) return
 
     let hls: Hls | null = null
 
-    // 🔥 HLS stream handling
-    if (videoUrl.endsWith(".m3u8")) {
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        // ✅ Safari (native HLS)
-        video.src = videoUrl
-      } else if (Hls.isSupported()) {
-        // ✅ Chrome, Firefox, Edge
-        hls = new Hls()
-        hls.loadSource(videoUrl)
-        hls.attachMedia(video)
+    const playVideo = () => {
+      if (videoUrl.endsWith(".m3u8")) {
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          // Safari native HLS
+          video.src = videoUrl
+        } else if (Hls.isSupported()) {
+          hls = new Hls()
+          hls.loadSource(videoUrl)
+          hls.attachMedia(video)
+        } else {
+          console.error("HLS not supported in this browser")
+          return
+        }
       } else {
-        console.error("HLS not supported in this browser")
+        // Normal MP4 fallback
+        video.src = videoUrl
       }
-    } else {
-      // ✅ Normal MP4 fallback
-      video.src = videoUrl
+
+      video.play().catch((err) => {
+        console.warn("Autoplay failed, user interaction required:", err)
+      })
     }
 
-    video.play().catch(() => {})
+    const timer = setTimeout(playVideo, 100)
 
     return () => {
+      clearTimeout(timer)
       if (hls) {
         hls.destroy()
       }
