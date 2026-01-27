@@ -16,7 +16,7 @@ interface AccessCodeModalProps {
   open: boolean
   onClose: () => void
   movieId: number
-  onSuccess: () => void
+  onSuccess: (videoUrl: string) => void
 }
 
 export function AccessCodeModal({
@@ -69,7 +69,8 @@ export function AccessCodeModal({
         return
       }
 
-      onSuccess()
+      // 🎬 Pass movie video URL to parent
+      onSuccess(data.video_url)
       onClose()
     } catch (err) {
       setError("Something went wrong. Please try again.")
@@ -81,7 +82,6 @@ export function AccessCodeModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        {/* Move DialogTitle directly under DialogContent */}
         <DialogTitle>Enter Access Code</DialogTitle>
 
         <DialogHeader>
