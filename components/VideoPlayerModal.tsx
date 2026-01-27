@@ -3,6 +3,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog"
 import { useEffect, useRef } from "react"
+import Hls from "hls.js"
 
 interface VideoPlayerModalProps {
   open: boolean
@@ -19,36 +20,46 @@ export function VideoPlayerModal({
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || !open) return
 
-    // Auto-play when opened
-    if (open) {
-      video.play().catch(() => {})
-    }
+    let hls: Hls | null = null
 
-    // Auto fullscreen on mobile
-    const handleOrientation = () => {
-      if (window.innerWidth < 768 && video.requestFullscreen) {
-        video.requestFullscreen().catch(() => {})
+    // 🔥 HLS stream handling
+    if (videoUrl.endsWith(".m3u8")) {
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // ✅ Safari (native HLS)
+        video.src = videoUrl
+      } else if (Hls.isSupported()) {
+        // ✅ Chrome, Firefox, Edge
+        hls = new Hls()
+        hls.loadSource(videoUrl)
+        hls.attachMedia(video)
+      } else {
+        console.error("HLS not supported in this browser")
       }
+    } else {
+      // ✅ Normal MP4 fallback
+      video.src = videoUrl
     }
 
-    window.addEventListener("orientationchange", handleOrientation)
+    video.play().catch(() => {})
 
     return () => {
-      window.removeEventListener("orientationchange", handleOrientation)
+      if (hls) {
+        hls.destroy()
+      }
+      video.pause()
+      video.src = ""
     }
-  }, [open])
+  }, [open, videoUrl])
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="p-0 bg-black max-w-screen h-screen">
         <video
           ref={videoRef}
-          src={videoUrl}
           controls
           playsInline
-          autoPlay
           className="w-full h-full object-contain bg-black"
         />
       </DialogContent>
