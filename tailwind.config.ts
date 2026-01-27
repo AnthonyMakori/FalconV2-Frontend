@@ -59,6 +59,10 @@ const config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
+      /* ===============================
+         ✨ Enhanced Cinematic Animations
+         =============================== */
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -69,18 +73,41 @@ const config = {
           to: { height: "0" },
         },
 
-        // 🔹 Netflix-style logo animation
-        "fade-in-out": {
-          "0%, 100%": { opacity: "0", transform: "scale(0.8)" },
-          "50%": { opacity: "1", transform: "scale(1)" },
+        /* 🎬 Netflix-style logo intro */
+        "logo-cinematic": {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.6) translateY(-30px) rotateY(-35deg)",
+            filter: "blur(6px)",
+          },
+          "25%": {
+            opacity: "0.7",
+            transform: "scale(1.05) translateY(6px) rotateY(10deg)",
+            filter: "blur(1px)",
+          },
+          "50%": {
+            opacity: "1",
+            transform: "scale(1) translateY(0) rotateY(0deg)",
+            filter: "blur(0)",
+          },
+          "75%": {
+            opacity: "0.7",
+            transform: "scale(1.05) translateY(6px) rotateY(-10deg)",
+            filter: "blur(1px)",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "scale(0.6) translateY(-30px) rotateY(35deg)",
+            filter: "blur(6px)",
+          },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
 
-        // 🔹 Logo animation with 3s default duration
-        "fade-in-out": "fade-in-out 3s ease-in-out forwards",
+        /* 🎥 Cinematic logo animation */
+        "logo-cinematic": "logo-cinematic 3.2s cubic-bezier(0.4, 0, 0.2, 1) forwards",
       },
     },
   },
