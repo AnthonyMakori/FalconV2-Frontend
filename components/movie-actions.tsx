@@ -14,6 +14,10 @@ interface MovieActionsProps {
 }
 
 export default function MovieActions({ movie }: MovieActionsProps) {
+
+   console.log("🎬 MovieActions received movie:", movie)
+  console.log("🎬 MovieActions movie.id:", movie?.id)
+  
   const { favorites, toggleFavorite } = useFavorites()
   const { watchlist, toggleWatchlist } = useWatchlist()
   const [isSharing, setIsSharing] = useState(false)
