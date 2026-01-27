@@ -83,8 +83,10 @@ export function VideoPlayerModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-  <DialogContent className="p-0 bg-black fixed inset-0 flex items-center justify-center z-50 overflow-hidden">
-    
+  <DialogContent
+    className="p-0 bg-black fixed inset-0 w-full h-full max-w-full max-h-full flex items-center justify-center overflow-hidden"
+    style={{ padding: 0 }} // ensure no default padding
+  >
     {/* Logo Animation Overlay */}
     {showLogo && logoSrc && (
       <div className="absolute inset-0 flex items-center justify-center bg-black z-30">
@@ -111,17 +113,11 @@ export function VideoPlayerModal({
         autoPlay
         playsInline
         muted={false}
-        className="w-full h-full object-contain bg-black"
+        className="absolute top-0 left-0 w-full h-full object-contain bg-black"
       />
     )}
-
-    {/* Close Button */}
-    <div className="absolute top-6 right-6 z-20">
-      <Button variant="outline" onClick={onClose} className="text-white">
-        ✕
-      </Button>
-    </div>
   </DialogContent>
 </Dialog>
+
   )
 }
