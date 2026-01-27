@@ -34,17 +34,26 @@ export function OverviewTab({
 
   useEffect(() => {
     const fetchMovies = async () => {
-      const results: any[] = []
+      if (!Array.isArray(continueWatching) || continueWatching.length === 0) {
+        setContinueWatchingDetails([])
+        return
+      }
 
-      await Promise.all(
+      const results: any[] = await Promise.all(
         continueWatching.map(async (item) => {
+          // Skip invalid items
+          if (!item || typeof item.movie_id === "undefined" || item.movie_id === null) {
+            console.warn("Skipping invalid continueWatching item:", item)
+            return item
+          }
+
           try {
             const data = await getMovieDetails(item.movie_id.toString())
-            if (data) results.push({ ...item, poster_path: data.poster_path })
-            else results.push(item) // fallback to original item if fetch fails
+            // Merge poster_path if fetch succeeds, otherwise return original item
+            return data ? { ...item, poster_path: data.poster_path } : item
           } catch (err) {
             console.error(`Failed to fetch movie ${item.movie_id}:`, err)
-            results.push(item)
+            return item
           }
         })
       )
@@ -52,7 +61,7 @@ export function OverviewTab({
       setContinueWatchingDetails(results)
     }
 
-    if (continueWatching.length > 0) fetchMovies()
+    fetchMovies()
   }, [continueWatching])
 
   const getVideoUrl = (movieId: number) =>
