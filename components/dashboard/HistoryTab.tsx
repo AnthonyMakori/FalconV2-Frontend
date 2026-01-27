@@ -50,22 +50,19 @@ export function HistoryTab({ history }: { history: HistoryItem[] }) {
   const [historyState, setHistoryState] = useState(history)
   const [moviesData, setMoviesData] = useState<Record<number, MovieWithRating | null>>({})
 
-  // Fetch movie details for all history items in parallel
+  // Fetch movie details for all history items
   useEffect(() => {
     const fetchMovies = async () => {
-      const promises = historyState.map(async (item) => {
+      const data: Record<number, MovieWithRating | null> = {}
+      for (const item of historyState) {
         try {
           const movie = await getMovieDetails(item.id.toString())
-          return { id: item.id, data: movie as MovieWithRating }
-        } catch (e) {
-          console.error(`Failed to fetch movie ${item.title}:`, e)
-          return { id: item.id, data: null }
+          data[item.id] = movie || null
+        } catch (err) {
+          console.error(`Failed to fetch movie ${item.title}:`, err)
+          data[item.id] = null
         }
-      })
-
-      const results = await Promise.all(promises)
-      const data: Record<number, MovieWithRating | null> = {}
-      results.forEach((res) => (data[res.id] = res.data))
+      }
       setMoviesData(data)
     }
 
@@ -94,7 +91,7 @@ export function HistoryTab({ history }: { history: HistoryItem[] }) {
           ) : (
             historyState.map((item) => {
               const movie = moviesData[item.id]
-              const poster = item.thumbnail || movie?.poster_path
+              const poster = movie?.poster_path || item.thumbnail
 
               return (
                 <div
@@ -140,8 +137,10 @@ export function HistoryTab({ history }: { history: HistoryItem[] }) {
                   <div className="flex-1 space-y-1">
                     <h4 className="font-medium leading-tight">
                       {item.title}{" "}
-                      {item.year && (
-                        <span className="text-sm text-muted-foreground">({item.year})</span>
+                      {movie?.release_date && (
+                        <span className="text-sm text-muted-foreground">
+                          ({new Date(movie.release_date).getFullYear()})
+                        </span>
                       )}
                     </h4>
 
