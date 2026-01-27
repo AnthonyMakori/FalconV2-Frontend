@@ -23,36 +23,73 @@ export function VideoPlayerModal({ open, onClose, videoUrl }: VideoPlayerModalPr
   const [isPlaying, setIsPlaying] = useState(false)
 
   useEffect(() => {
-    if (!isPlaying || !videoUrl) return
+    if (!isPlaying) {
+      console.log("[VideoPlayer] Waiting for user to click Play")
+      return
+    }
+
+    if (!videoUrl) {
+      console.error("[VideoPlayer] videoUrl is null or undefined!")
+      return
+    }
 
     const video = videoRef.current
-    if (!video) return
+    if (!video) {
+      console.error("[VideoPlayer] videoRef is null")
+      return
+    }
 
-    console.log("Starting video playback for URL:", videoUrl)
+    console.log("[VideoPlayer] Attempting to play video:", videoUrl)
+
+    video.src = "" // reset previous source
+    video.load()
+
+    // Listen for native errors
+    const onError = (e: any) => {
+      console.error("[VideoPlayer] HTML5 video error:", e, video.error)
+    }
+    video.addEventListener("error", onError)
+
+    // Listen for canplay
+    const onCanPlay = () => {
+      console.log("[VideoPlayer] Video can play, trying to play...")
+      video.play()
+        .then(() => console.log("[VideoPlayer] Video started successfully"))
+        .catch((err) => console.error("[VideoPlayer] Video play() rejected:", err))
+    }
+    video.addEventListener("canplay", onCanPlay)
 
     if (videoUrl.endsWith(".m3u8")) {
+      console.log("[VideoPlayer] Detected HLS stream")
       if (Hls.isSupported()) {
         const hls = new Hls()
         hls.loadSource(videoUrl)
         hls.attachMedia(video)
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log("HLS manifest parsed, playing video...")
-          video.play().catch((err) => console.error("HLS play error:", err))
+          console.log("[VideoPlayer] HLS manifest parsed")
         })
         hls.on(Hls.Events.ERROR, (event, data) => {
-          console.error("HLS.js error:", data)
+          console.error("[VideoPlayer] HLS.js error:", data)
         })
-        return () => hls.destroy()
+        return () => {
+          hls.destroy()
+          video.removeEventListener("error", onError)
+          video.removeEventListener("canplay", onCanPlay)
+        }
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        console.log("[VideoPlayer] Browser supports native HLS")
         video.src = videoUrl
-        video.play().catch((err) => console.error("Native HLS play error:", err))
       } else {
-        console.error("HLS not supported in this browser")
+        console.error("[VideoPlayer] HLS not supported in this browser")
       }
     } else {
-      // mp4 fallback
+      console.log("[VideoPlayer] Assuming MP4 or standard video format")
       video.src = videoUrl
-      video.play().catch((err) => console.error("MP4 play error:", err))
+    }
+
+    return () => {
+      video.removeEventListener("error", onError)
+      video.removeEventListener("canplay", onCanPlay)
     }
   }, [isPlaying, videoUrl])
 
@@ -60,16 +97,11 @@ export function VideoPlayerModal({ open, onClose, videoUrl }: VideoPlayerModalPr
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="p-0 bg-black max-w-screen h-screen flex items-center justify-center">
         <DialogTitle className="sr-only">Movie Player</DialogTitle>
-        <DialogDescription className="sr-only">
-          Plays the selected movie
-        </DialogDescription>
+        <DialogDescription className="sr-only">Plays the selected movie</DialogDescription>
 
         {!isPlaying ? (
           <div className="flex flex-col items-center justify-center w-full h-full">
-            <Button
-              onClick={() => setIsPlaying(true)}
-              className="px-8 py-4 text-lg"
-            >
+            <Button onClick={() => setIsPlaying(true)} className="px-8 py-4 text-lg">
               ▶ Play Movie
             </Button>
           </div>
