@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { useEffect, useRef } from "react"
 import Hls from "hls.js"
 
@@ -24,15 +24,12 @@ export function VideoPlayerModal({
     let hls: Hls | null = null
 
     const playVideo = async () => {
-      // ⚡ Mute for autoplay
-      video.muted = true
+      video.muted = true // ⚡ muted for autoplay
 
       if (videoUrl.endsWith(".m3u8")) {
         if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          // Safari native HLS
           video.src = videoUrl
         } else if (Hls.isSupported()) {
-          // HLS.js for Chrome/Firefox/Edge
           hls = new Hls()
           hls.loadSource(videoUrl)
           hls.attachMedia(video)
@@ -41,7 +38,6 @@ export function VideoPlayerModal({
           return
         }
       } else {
-        // MP4 fallback
         video.src = videoUrl
       }
 
@@ -52,15 +48,13 @@ export function VideoPlayerModal({
         console.warn("Autoplay blocked, user interaction required:", err)
       }
 
-      // ⚡ Optional: unmute after user interacts
+      // Allow unmute on click
       video.addEventListener("click", () => {
-        if (video.muted) {
-          video.muted = false
-        }
+        if (video.muted) video.muted = false
       })
     }
 
-    // Delay slightly to ensure dialog renders fully
+    // Slight delay to ensure dialog renders
     const timer = setTimeout(playVideo, 100)
 
     return () => {
@@ -74,11 +68,14 @@ export function VideoPlayerModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="p-0 bg-black max-w-screen h-screen">
+        {/* ⚡ Required for accessibility */}
+        <DialogTitle className="sr-only">Movie Player</DialogTitle>
+
         <video
           ref={videoRef}
           controls
           playsInline
-          muted // ⚡ important for autoplay
+          muted
           className="w-full h-full object-contain bg-black"
         />
       </DialogContent>
