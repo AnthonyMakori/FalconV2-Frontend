@@ -156,7 +156,7 @@ export default function HeroSlider() {
             >
               <Link href={`/watch/${currentMovie.id}`}>
                 <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                <span>Watch Trailer N N</span>
+                <span>Watch Trailer</span>
               </Link>
             </Button>
 
