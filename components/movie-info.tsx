@@ -59,7 +59,7 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
           />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-muted-foreground">No poster available</span>
+            <span className="text-muted-foreground">No poster available for now</span>
           </div>
         )}
       </div>

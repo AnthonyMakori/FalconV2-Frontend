@@ -18,6 +18,9 @@ import { resolveMovieImage } from "@/lib/image"
 
 
 export default function MovieClientPage({ params }: { params: { id: string } }) {
+  console.log("🧩 MovieClientPage params:", params)
+  console.log("🧩 Movie ID received:", params?.id)
+  
   const router = useRouter()
   const [movie, setMovie] = useState<any>(null)
   const [credits, setCredits] = useState<any>(null)

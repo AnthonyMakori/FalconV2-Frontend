@@ -42,7 +42,7 @@ export default function Hero() {
     return null
   }
 
-  const backdropUrl = resolveMovieImage(movie.backdrop_path) // ✅ Use resolver
+  const backdropUrl = resolveMovieImage(movie.backdrop_path) 
 
   return (
     <div className="relative w-full h-[60vh] overflow-hidden rounded-lg">

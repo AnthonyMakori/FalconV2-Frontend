@@ -10,7 +10,7 @@ export function useWatchlist() {
   useEffect(() => {
     const loadWatchlist = () => {
       try {
-        const stored = localStorage.getItem("cynthia-movies-watchlist")
+        const stored = localStorage.getItem("Falcon-Movies-watchlist")
         if (stored) {
           const parsedWatchlist = JSON.parse(stored)
           console.log("Loaded watchlist from localStorage:", parsedWatchlist)
@@ -34,7 +34,7 @@ export function useWatchlist() {
   useEffect(() => {
     if (isLoaded && typeof window !== "undefined") {
       try {
-        localStorage.setItem("cynthia-movies-watchlist", JSON.stringify(watchlist))
+        localStorage.setItem("Falcon-Movies-watchlist", JSON.stringify(watchlist))
         console.log("Saved watchlist to localStorage:", watchlist)
       } catch (error) {
         console.error("Failed to save watchlist to localStorage:", error)

@@ -12,7 +12,7 @@ export function useFavorites() {
   useEffect(() => {
     const loadFavorites = () => {
       try {
-        const stored = localStorage.getItem("cynthia-movies-favorites")
+        const stored = localStorage.getItem("Falcon-Movies-favorites")
         if (stored) {
           const parsedFavorites = JSON.parse(stored)
           console.log("Loaded favorites from localStorage:", parsedFavorites)
@@ -36,7 +36,7 @@ export function useFavorites() {
   useEffect(() => {
     if (isLoaded && typeof window !== "undefined") {
       try {
-        localStorage.setItem("cynthia-movies-favorites", JSON.stringify(favorites))
+        localStorage.setItem("Falcon-Movies-favorites", JSON.stringify(favorites))
         console.log("Saved favorites to localStorage:", favorites)
       } catch (error) {
         console.error("Failed to save favorites to localStorage:", error)
