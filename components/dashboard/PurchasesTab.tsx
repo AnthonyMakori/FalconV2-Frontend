@@ -40,6 +40,8 @@ export function PurchasesTab({
     useState<PurchaseItem | null>(null)
   const [accessModalOpen, setAccessModalOpen] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+
 
   // Store full movie details including poster_path
   const [movieDetails, setMovieDetails] = useState<Record<number, any>>({})
@@ -167,28 +169,31 @@ export function PurchasesTab({
         </CardFooter>
       </Card>
 
-      {selectedPurchase && (
-        <AccessCodeModal
-          open={accessModalOpen}
-          movieId={selectedPurchase.movie_id}
-          onClose={() => setAccessModalOpen(false)}
-          onSuccess={() => {
-            setAccessModalOpen(false)
-            setPlayerOpen(true)
-          }}
-        />
-      )}
+    {selectedPurchase && (
+      <AccessCodeModal
+        open={accessModalOpen}
+        movieId={selectedPurchase.movie_id}
+        onClose={() => setAccessModalOpen(false)}
+        onSuccess={(url) => {
+          console.log("Received video URL:", url)
+          setVideoUrl(url)
+          setAccessModalOpen(false)
+          setPlayerOpen(true)
+        }}
+      />
+    )}
 
-      {selectedPurchase && (
-        <VideoPlayerModal
-          open={playerOpen}
-          videoUrl={getVideoUrl(selectedPurchase.movie_id)}
-          onClose={() => {
-            setPlayerOpen(false)
-            setSelectedPurchase(null)
-          }}
-        />
-      )}
+    {selectedPurchase && videoUrl && (
+      <VideoPlayerModal
+        open={playerOpen}
+        videoUrl={videoUrl} 
+        onClose={() => {
+          setPlayerOpen(false)
+          setSelectedPurchase(null)
+          setVideoUrl(null)
+        }}
+      />
+    )}
     </>
   )
 }

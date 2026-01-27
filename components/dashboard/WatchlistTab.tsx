@@ -33,6 +33,7 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
   const [selectedMovie, setSelectedMovie] = useState<WatchlistItem | null>(null)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [accessModalOpen, setAccessModalOpen] = useState(false)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
 
   // Store full movie details including poster_path
   const [movieDetails, setMovieDetails] = useState<Record<number, any>>({})
@@ -147,20 +148,24 @@ export function WatchlistTab({ watchlist }: { watchlist: WatchlistItem[] }) {
           open={accessModalOpen}
           movieId={selectedMovie.movie_id}
           onClose={() => setAccessModalOpen(false)}
-          onSuccess={() => {
+          onSuccess={(url) => {
+            console.log("Received video URL:", url) 
+            setVideoUrl(url)          
             setAccessModalOpen(false)
             setPlayerOpen(true)
           }}
         />
       )}
 
-      {selectedMovie && (
+
+      {selectedMovie && videoUrl && (
         <VideoPlayerModal
           open={playerOpen}
-          videoUrl={selectedMovie.video_url}
+          videoUrl={videoUrl}
           onClose={() => {
             setPlayerOpen(false)
             setSelectedMovie(null)
+            setVideoUrl(null) 
           }}
         />
       )}
