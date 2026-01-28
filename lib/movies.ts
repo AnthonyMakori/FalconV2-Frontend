@@ -44,14 +44,14 @@ export interface Movie {
  */
 export async function getAllMovies(): Promise<Movie[]> {
   try {
-    // ✅ Explicit generic ensures no `unknown` leaks
-    const movies = await apiService.request<Movie[]>("/movies")
-    return movies
+    const response = await apiService.request<{ data: Movie[] }>("/movies")
+    return response.data ?? []
   } catch (error) {
     console.error("Failed to fetch all movies:", error)
     return []
   }
 }
+
 
 /**
  * Trending / Popular / Recommended
@@ -74,15 +74,14 @@ export async function getRecommendedMovies(): Promise<Movie[]> {
  */
 export async function getMovieDetailsOver(id: string): Promise<Movie | null> {
   try {
-    // ✅ Force inference to Movie[]
-    const movies: Movie[] = await getAllMovies()
-
+    const movies = await getAllMovies()
     return movies.find(movie => movie.id === Number(id)) ?? null
   } catch (error) {
     console.error(`Failed to fetch movie details for ID ${id}:`, error)
     return null
   }
 }
+
 
 /**
  * Search movies by query
