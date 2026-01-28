@@ -4,18 +4,17 @@ import { useState } from "react"
 import { Play, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { isLocalVideo } from "@/lib/video-utils"
 
-interface VideoPlayerProps {
-  videos: {
-    id: string
-    key: string
-    name: string
-    type: string
-    site: string
-  }[]
+interface Video {
+  id: string
+  key: string
+  name: string
+  type: string
+  site: string
 }
 
-export default function VideoPlayer({ videos }: VideoPlayerProps) {
+export default function VideoPlayer({ videos }: { videos: Video[] }) {
   const [selectedVideo, setSelectedVideo] = useState(videos[0])
   const [isMuted, setIsMuted] = useState(false)
 
@@ -27,23 +26,25 @@ export default function VideoPlayer({ videos }: VideoPlayerProps) {
     )
   }
 
-  const trailers = videos.filter((video) => video.type === "Trailer")
-  const clips = videos.filter((video) => video.type === "Clip")
-  const teasers = videos.filter((video) => video.type === "Teaser")
-
   return (
     <div className="space-y-4">
-      {/* Main video player */}
+      {/* MAIN PLAYER */}
       <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group">
-        <iframe
-          src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=0&mute=${isMuted ? 1 : 0}&rel=0&modestbranding=1`}
-          title={selectedVideo.name}
-          className="w-full h-full"
-          allowFullScreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        />
+        {isLocalVideo(selectedVideo.key) ? (
+          <video
+            src={selectedVideo.key}
+            controls
+            autoPlay
+            muted={isMuted}
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            Unsupported video format
+          </div>
+        )}
 
-        {/* Video controls overlay */}
+        {/* Controls */}
         <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="secondary"
@@ -56,91 +57,32 @@ export default function VideoPlayer({ videos }: VideoPlayerProps) {
         </div>
       </div>
 
-      {/* Video selection */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Current: {selectedVideo.name}</h3>
+      {/* VIDEO SELECTOR */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold">
+          Now Playing: {selectedVideo.name}
+        </h3>
 
-        {trailers.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Trailers</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {trailers.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {clips.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Clips</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {clips.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {teasers.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Teasers</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {teasers.map((video) => (
-                <VideoThumbnail
-                  key={video.id}
-                  video={video}
-                  isSelected={selectedVideo.id === video.id}
-                  onClick={() => setSelectedVideo(video)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="flex gap-3 overflow-x-auto">
+          {videos.map((video) => (
+            <button
+              key={video.id}
+              onClick={() => setSelectedVideo(video)}
+              className={cn(
+                "relative w-40 h-24 rounded overflow-hidden bg-black flex items-center justify-center transition-all",
+                selectedVideo.id === video.id
+                  ? "ring-2 ring-primary"
+                  : "hover:scale-105"
+              )}
+            >
+              <Play className="h-8 w-8 text-white opacity-80" />
+              <span className="absolute bottom-1 left-1 right-1 text-xs text-white truncate">
+                {video.name}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
-  )
-}
-
-function VideoThumbnail({
-  video,
-  isSelected,
-  onClick,
-}: {
-  video: any
-  isSelected: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "relative flex-shrink-0 w-32 h-20 rounded overflow-hidden group transition-all",
-        isSelected ? "ring-2 ring-primary" : "hover:scale-105",
-      )}
-    >
-      <img
-        src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`}
-        alt={video.name}
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Play className="h-6 w-6 text-white drop-shadow-lg" />
-      </div>
-      <div className="absolute bottom-1 left-1 right-1">
-        <p className="text-xs text-white font-medium truncate drop-shadow-lg">{video.name}</p>
-      </div>
-    </button>
   )
 }
