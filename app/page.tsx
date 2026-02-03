@@ -11,6 +11,8 @@ import ScrollToTopOnMount from "@/components/scroll-to-top-on-mount"
 export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
+      
+
       <ScrollToTopOnMount />
       <HeroSlider />
       <Suspense fallback={<MoviesSectionSkeleton title="Featured Movies" />}>

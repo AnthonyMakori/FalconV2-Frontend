@@ -2,6 +2,8 @@ import { getTopRatedMovies } from "@/lib/tmdb"
 import MovieGrid from "@/components/movie-grid"
 import SectionHeading from "@/components/section-heading"
 
+
+export const dynamic = "force-dynamic"
 export default async function TopRatedMovies() {
   const { results } = await getTopRatedMovies()
 

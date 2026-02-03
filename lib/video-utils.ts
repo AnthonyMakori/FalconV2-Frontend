@@ -1,9 +1,5 @@
 // lib/video-utils.ts
 
-/**
- * Checks whether a video URL is a playable local/hosted video
- * (not YouTube, Vimeo, etc.)
- */
 export function isLocalVideo(url?: string | null): boolean {
   if (!url) {
     console.warn("[VideoUtils] isLocalVideo called with empty url:", url)

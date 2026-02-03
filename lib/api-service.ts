@@ -15,7 +15,7 @@ class ApiService {
   async request<T>(
     endpoint: string,
     params: Record<string, string> = {},
-    ttl = 5 * 60 * 1000, // 5 mins
+    ttl = 0, 
   ): Promise<T> {
     const cacheKey = this.getCacheKey(endpoint, params)
     const cached = this.cache.get(cacheKey)
@@ -31,7 +31,9 @@ class ApiService {
         headers: {
           Accept: "application/json",
         },
+        cache: "no-store",   
       })
+
 
       if (!response.ok) {
         throw new Error(`API error ${response.status}`)
