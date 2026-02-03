@@ -1,12 +1,17 @@
-// lib/media.ts
-const ASSET_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ""
+
+function getAssetBaseUrl() {
+  // Replace /api with /assets
+  return API_BASE.replace(/\/api\/?$/, "/assets")
+}
 
 export function resolveMovieTrailer(path?: string | null) {
   if (!path) return null
 
-  // Full URL already
+  // Already full URL
   if (path.startsWith("http")) return path
 
-  // Backend relative path
-  return `${ASSET_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`
+  const assetBase = getAssetBaseUrl()
+
+  return `${assetBase}/${path.replace(/^\/+/, "")}`
 }

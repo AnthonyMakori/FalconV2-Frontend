@@ -139,10 +139,10 @@ export async function getMovieVideos(movieId: string): Promise<VideoPlayerVideo[
     if (trailerUrl) {
       videos.push({
         id: "trailer",
-        key: trailerUrl,  // ✅ now guaranteed string
+        key: trailerUrl,  
         name: "Trailer",
         type: "Trailer",
-        site: "local", // or "bunny"
+        site: "local", 
       })
     }
 
