@@ -2,7 +2,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || ""
 
 function getAssetBaseUrl() {
   // Replace /api with /assets
-  return API_BASE.replace(/\/api\/?$/, "/assets")
+  return API_BASE.replace(/\/api\/?$/, "/public/assets")
 }
 
 export function resolveMovieTrailer(path?: string | null) {
