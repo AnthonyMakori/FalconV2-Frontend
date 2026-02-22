@@ -15,7 +15,6 @@ export default function NewMoviePage() {
 
   const [loading,setLoading] = useState(false)
   const [uploadingMovie,setUploadingMovie] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
 
   // Basic
   const [title,setTitle]=useState("")
@@ -25,13 +24,8 @@ export default function NewMoviePage() {
   const [language,setLanguage]=useState("")
   const [genre,setGenre]=useState("")
   const [status,setStatus]=useState("draft")
-
-  // Casts with images
-  const [casts, setCasts] = useState<{ name: string; image: File | null }[]>([])
-  const [castInput, setCastInput] = useState("")
-  const [castImage, setCastImage] = useState<File | null>(null)
-
-  // Tags
+  const [casts,setCasts]=useState<string[]>([])
+  const [castInput,setCastInput]=useState("")
   const [tags,setTags]=useState<string[]>([])
   const [tagInput,setTagInput]=useState("")
 
@@ -53,23 +47,13 @@ export default function NewMoviePage() {
   const [seoDescription,setSeoDescription]=useState("")
   const [seoKeywords,setSeoKeywords]=useState("")
 
-  // Casts functions
-  const addCast = () => {
-    if (castInput.trim()) {
-      setCasts([...casts, { name: castInput.trim(), image: castImage }])
-      setCastInput("")
-      setCastImage(null)
-    }
-  }
-  const removeCast = (name: string) => setCasts(casts.filter(c => c.name !== name))
+  const addCast = ()=>{if(castInput.trim()) {setCasts([...casts,castInput.trim()]); setCastInput("")}}
+  const removeCast=(c:string)=>setCasts(casts.filter(x=>x!==c))
+  const addTag = ()=>{if(tagInput.trim()){setTags([...tags,tagInput.trim()]); setTagInput("")}}
+  const removeTag=(t:string)=>setTags(tags.filter(x=>x!==t))
 
-  // Tags functions
-  const addTag = () => { if(tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput("") } }
-  const removeTag = (t: string) => setTags(tags.filter(x => x !== t))
-
-  const submitMovie = async(publish=false) => {
+  const submitMovie = async(publish=false)=>{
     setLoading(true)
-    setUploadingMovie(true)
     try{
       const token = localStorage.getItem("token")
       let bunnyVideoId: string|null = null
@@ -77,7 +61,6 @@ export default function NewMoviePage() {
         // TODO: implement Bunny upload
         // bunnyVideoId = await uploadMovieToBunny(movie)
       }
-
       const formData = new FormData()
       formData.append("title",title)
       formData.append("description",description)
@@ -94,46 +77,27 @@ export default function NewMoviePage() {
       formData.append("seo_title",seoTitle)
       formData.append("seo_description",seoDescription)
       formData.append("seo_keywords",seoKeywords)
-
-      // Append casts and their images
-      casts.forEach(c => {
-        formData.append("casts[]", c.name)
-        if(c.image) formData.append("cast_images[]", c.image)
-      })
-
-      // Append tags
-      tags.forEach(t => formData.append("tags[]", t))
-
-      // Append other media
+      casts.forEach(c=>formData.append("casts[]",c))
+      tags.forEach(t=>formData.append("tags[]",t))
       if(poster) formData.append("poster",poster)
       if(trailer) formData.append("trailer",trailer)
-      subtitles.forEach(s => formData.append("subtitles[]", s))
+      subtitles.forEach(s=>formData.append("subtitles[]",s))
       if(bunnyVideoId) formData.append("bunny_video_id",bunnyVideoId)
 
       const res = await fetch(`${API_URL}/movies`,{
         method:"POST",
-        headers:{ Authorization: `Bearer ${token}` },
+        headers:{Authorization:`Bearer ${token}`},
         body: formData
       })
-
       if(!res.ok) throw await res.json()
-
-      setSuccessMessage("Movie Uploaded Successfully ")
-      setTimeout(()=>setSuccessMessage(""), 3000)
-    } catch(err){
-      console.error(err)
-      setSuccessMessage("Failed to upload movie ")
-      setTimeout(()=>setSuccessMessage(""),3000)
-    } finally{
-      setLoading(false)
-      setUploadingMovie(false)
-    }
+      alert("Movie saved successfully 🎉")
+    }catch(err){console.error(err); alert("Failed")}
+    finally{setLoading(false)}
   }
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6">
 
-      {/* Top Bar */}
       <div className="flex items-center gap-4">
         <Link href="/admin/movies">
           <Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4"/></Button>
@@ -141,7 +105,6 @@ export default function NewMoviePage() {
         <h1 className="text-3xl font-bold">Add New Movie</h1>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="basic">
         <TabsList>
           <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -159,7 +122,7 @@ export default function NewMoviePage() {
             language={language} setLanguage={setLanguage}
             genre={genre} setGenre={setGenre}
             status={status} setStatus={setStatus}
-            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput} castImage={castImage} setCastImage={setCastImage}
+            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput}
             tags={tags} addTag={addTag} removeTag={removeTag} tagInput={tagInput} setTagInput={setTagInput}
           />
         </TabsContent>
@@ -177,25 +140,10 @@ export default function NewMoviePage() {
         </TabsContent>
       </Tabs>
 
-      {/* Actions */}
       <div className="flex justify-end gap-4">
         <Button variant="outline" disabled={loading} onClick={()=>submitMovie(false)}>Save as Draft</Button>
         <Button disabled={loading} onClick={()=>submitMovie(true)}>Publish Movie</Button>
       </div>
-
-      {/* Loading Spinner */}
-      {uploadingMovie && (
-        <div className="fixed bottom-6 left-6 bg-blue-600 text-white px-4 py-2 rounded shadow-md animate-spin">
-          Uploading...
-        </div>
-      )}
-
-      {/* Success / Error Toast */}
-      {successMessage && (
-        <div className="fixed bottom-6 left-6 bg-green-600 text-white px-4 py-2 rounded shadow-md transition-all duration-300">
-          {successMessage}
-        </div>
-      )}
 
     </div>
   )
