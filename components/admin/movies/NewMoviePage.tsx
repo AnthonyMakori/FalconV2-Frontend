@@ -25,8 +25,13 @@ export default function NewMoviePage() {
   const [language,setLanguage]=useState("")
   const [genre,setGenre]=useState("")
   const [status,setStatus]=useState("draft")
-  const [casts,setCasts]=useState<string[]>([])
-  const [castInput,setCastInput]=useState("")
+
+  // Casts with images
+  const [casts, setCasts] = useState<{ name: string; image: File | null }[]>([])
+  const [castInput, setCastInput] = useState("")
+  const [castImage, setCastImage] = useState<File | null>(null)
+
+  // Tags
   const [tags,setTags]=useState<string[]>([])
   const [tagInput,setTagInput]=useState("")
 
@@ -48,12 +53,21 @@ export default function NewMoviePage() {
   const [seoDescription,setSeoDescription]=useState("")
   const [seoKeywords,setSeoKeywords]=useState("")
 
-  const addCast = ()=>{if(castInput.trim()) {setCasts([...casts,castInput.trim()]); setCastInput("")}}
-  const removeCast=(c:string)=>setCasts(casts.filter(x=>x!==c))
-  const addTag = ()=>{if(tagInput.trim()){setTags([...tags,tagInput.trim()]); setTagInput("")}}
-  const removeTag=(t:string)=>setTags(tags.filter(x=>x!==t))
+  // Casts functions
+  const addCast = () => {
+    if (castInput.trim()) {
+      setCasts([...casts, { name: castInput.trim(), image: castImage }])
+      setCastInput("")
+      setCastImage(null)
+    }
+  }
+  const removeCast = (name: string) => setCasts(casts.filter(c => c.name !== name))
 
-  const submitMovie = async(publish=false)=>{
+  // Tags functions
+  const addTag = () => { if(tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput("") } }
+  const removeTag = (t: string) => setTags(tags.filter(x => x !== t))
+
+  const submitMovie = async(publish=false) => {
     setLoading(true)
     setUploadingMovie(true)
     try{
@@ -80,26 +94,37 @@ export default function NewMoviePage() {
       formData.append("seo_title",seoTitle)
       formData.append("seo_description",seoDescription)
       formData.append("seo_keywords",seoKeywords)
-      casts.forEach(c=>formData.append("casts[]",c))
-      tags.forEach(t=>formData.append("tags[]",t))
+
+      // Append casts and their images
+      casts.forEach(c => {
+        formData.append("casts[]", c.name)
+        if(c.image) formData.append("cast_images[]", c.image)
+      })
+
+      // Append tags
+      tags.forEach(t => formData.append("tags[]", t))
+
+      // Append other media
       if(poster) formData.append("poster",poster)
       if(trailer) formData.append("trailer",trailer)
-      subtitles.forEach(s=>formData.append("subtitles[]",s))
+      subtitles.forEach(s => formData.append("subtitles[]", s))
       if(bunnyVideoId) formData.append("bunny_video_id",bunnyVideoId)
 
       const res = await fetch(`${API_URL}/movies`,{
         method:"POST",
-        headers:{Authorization:`Bearer ${token}`},
+        headers:{ Authorization: `Bearer ${token}` },
         body: formData
       })
 
       if(!res.ok) throw await res.json()
 
-      // Show success message
-      setSuccessMessage("Movie Uploaded Successfully 🎉")
+      setSuccessMessage("Movie Uploaded Successfully ")
       setTimeout(()=>setSuccessMessage(""), 3000)
-    }catch(err){console.error(err); setSuccessMessage("Failed to upload movie ❌"); setTimeout(()=>setSuccessMessage(""),3000)}
-    finally{
+    } catch(err){
+      console.error(err)
+      setSuccessMessage("Failed to upload movie ")
+      setTimeout(()=>setSuccessMessage(""),3000)
+    } finally{
       setLoading(false)
       setUploadingMovie(false)
     }
@@ -134,7 +159,7 @@ export default function NewMoviePage() {
             language={language} setLanguage={setLanguage}
             genre={genre} setGenre={setGenre}
             status={status} setStatus={setStatus}
-            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput}
+            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput} castImage={castImage} setCastImage={setCastImage}
             tags={tags} addTag={addTag} removeTag={removeTag} tagInput={tagInput} setTagInput={setTagInput}
           />
         </TabsContent>

@@ -20,11 +20,16 @@ interface BasicInfoProps {
   setGenre: (v: string) => void
   status: string
   setStatus: (v: string) => void
-  casts: string[]
+
+  // Updated casts type
+  casts: { name: string; image: File | null }[]
   addCast: () => void
-  removeCast: (c: string) => void
+  removeCast: (name: string) => void
   castInput: string
   setCastInput: (v: string) => void
+  castImage: File | null
+  setCastImage: (v: File | null) => void
+
   tags: string[]
   addTag: () => void
   removeTag: (t: string) => void
@@ -40,7 +45,7 @@ export default function BasicInfo({
   language, setLanguage,
   genre, setGenre,
   status, setStatus,
-  casts, addCast, removeCast, castInput, setCastInput,
+  casts, addCast, removeCast, castInput, setCastInput, castImage, setCastImage,
   tags, addTag, removeTag, tagInput, setTagInput
 }: BasicInfoProps) {
 
@@ -49,7 +54,7 @@ export default function BasicInfo({
 
       <div>
         <Label>Title</Label>
-        <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
 
       <div>
@@ -57,7 +62,7 @@ export default function BasicInfo({
         <Textarea
           className="min-h-[120px]"
           value={description}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
@@ -65,17 +70,17 @@ export default function BasicInfo({
         <Input
           placeholder="Release Year"
           value={releaseYear}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReleaseYear(e.target.value)}
+          onChange={(e) => setReleaseYear(e.target.value)}
         />
         <Input
           placeholder="Duration (min)"
           value={duration}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDuration(e.target.value)}
+          onChange={(e) => setDuration(e.target.value)}
         />
         <Input
           placeholder="Language"
           value={language}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLanguage(e.target.value)}
+          onChange={(e) => setLanguage(e.target.value)}
         />
       </div>
 
@@ -102,17 +107,32 @@ export default function BasicInfo({
         <Label>Cast</Label>
         <div className="flex flex-wrap gap-2 my-2">
           {casts.map((c) => (
-            <span key={c} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-              {c} <span className="cursor-pointer" onClick={() => removeCast(c)}>×</span>
-            </span>
+            <div key={c.name} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
+              {c.image && (
+                <img
+                  src={URL.createObjectURL(c.image)}
+                  alt={c.name}
+                  className="w-6 h-6 object-cover rounded-full"
+                />
+              )}
+              {c.name}
+              <span className="cursor-pointer text-red-500 font-bold" onClick={() => removeCast(c.name)}>×</span>
+            </div>
           ))}
         </div>
         <div className="flex gap-2">
           <Input
             value={castInput}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCastInput(e.target.value)}
+            onChange={(e) => setCastInput(e.target.value)}
+            placeholder="Cast Name"
           />
-          <button type="button" className="btn btn-sm" onClick={addCast}>Add</button>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setCastImage(e.target.files?.[0] || null)}
+            className="border px-2 py-1 rounded"
+          />
+          <button type="button" className="btn btn-sm bg-blue-600 text-white px-3 rounded" onClick={addCast}>Add</button>
         </div>
       </div>
 
@@ -122,16 +142,16 @@ export default function BasicInfo({
         <div className="flex flex-wrap gap-2 my-2">
           {tags.map((t) => (
             <span key={t} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-              {t} <span className="cursor-pointer" onClick={() => removeTag(t)}>×</span>
+              {t} <span className="cursor-pointer text-red-500 font-bold" onClick={() => removeTag(t)}>×</span>
             </span>
           ))}
         </div>
         <div className="flex gap-2">
           <Input
             value={tagInput}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
+            onChange={(e) => setTagInput(e.target.value)}
           />
-          <button type="button" className="btn btn-sm" onClick={addTag}>Add</button>
+          <button type="button" className="btn btn-sm bg-blue-600 text-white px-3 rounded" onClick={addTag}>Add</button>
         </div>
       </div>
 
