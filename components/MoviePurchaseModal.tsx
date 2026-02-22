@@ -1,14 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -20,13 +13,8 @@ interface MoviePurchaseModalProps {
   onClose: () => void
 }
 
-export default function MoviePurchaseModal({
-  movie,
-  isOpen,
-  onClose,
-}: MoviePurchaseModalProps) {
-  const router = useRouter()
-
+export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurchaseModalProps) {
+  const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
   const [amount, setAmount] = useState<number>(0)
@@ -34,97 +22,69 @@ export default function MoviePurchaseModal({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  // Set purchase price dynamically from the movie object
   useEffect(() => {
-    setAmount(Number(movie?.purchase_price || 0))
+    if (movie?.purchase_price) {
+      setAmount(Number(movie.purchase_price))
+    } else {
+      setAmount(0)
+    }
   }, [movie])
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-
   const handlePurchase = async () => {
-    setLoading(true)
-    setError(null)
+  setLoading(true)
+  setError(null)
 
-    try {
-      // FREE MOVIE FLOW
-      if (amount === 0) {
-        if (!email) {
-          setError("Email is required to unlock this free movie.")
-          setLoading(false)
-          return
-        }
-
-        const res = await fetch(`${API_URL}/stk/movies/unlock-free`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            movie_id: movie.id,
-          }),
-        })
-
-        const data = await res.json()
-        if (!res.ok) {
-          setError(data.message || "Failed to unlock movie.")
-          setLoading(false)
-          return
-        }
-
-        setSuccess(true)
-
-        setTimeout(() => {
-          router.push(`/watch/${movie.id}`)
-        }, 1500)
-
-        setLoading(false)
-        return
-      }
-
-      // PAID MOVIE FLOW
-      if (!token) {
-        setError("You must be logged in to purchase this movie.")
-        setLoading(false)
-        return
-      }
-
-      if (!phone) {
-        setError("Phone number is required.")
-        setLoading(false)
-        return
-      }
-
-      const res = await fetch(`${API_URL}/stk/initiate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          phone,
-          amount,
-          movie_id: movie.id,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.message || "Payment initiation failed.")
-        setLoading(false)
-        return
-      }
-
-      setSuccess(true)
-    } catch (err: any) {
-      setError(err?.message || "Something went wrong.")
-    } finally {
-      setLoading(false)
-    }
+  if (!name || !phone) {
+    setError("Name and phone number are required.")
+    setLoading(false)
+    return
   }
+
+  try {
+    const response = await fetch(`${API_URL}/stk/initiate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone,
+        email,
+        amount,
+        movie_id: movie.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    // Check for HTTP errors first
+    if (!response.ok) {
+      setError(data.message || `Payment initiation failed (HTTP ${response.status})`)
+      return
+    }
+
+    // If API returns a 'success' boolean, use it
+    if (data.success !== undefined) {
+      if (data.success) {
+        setSuccess(true)
+      } else {
+        setError(data.message || "Payment initiation failed.")
+      }
+    } else {
+      // No 'success' boolean? assume success if HTTP 200
+      setSuccess(true)
+    }
+  } catch (err: any) {
+    console.error("Purchase error:", err)
+    setError(err?.message || "Payment initiation failed.")
+  } finally {
+    setLoading(false)
+  }
+}
+
 
   const handleClose = () => {
     setSuccess(false)
     setError(null)
-    setPhone("")
-    setEmail("")
     onClose()
   }
 
@@ -132,52 +92,44 @@ export default function MoviePurchaseModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {amount > 0
-              ? `Purchase "${movie?.title}"`
-              : `Watch "${movie?.title}"`}
-          </DialogTitle>
+          <DialogTitle>Purchase "{movie?.title}"</DialogTitle>
           <DialogDescription>
-            {amount > 0 ? (
-              <>
-                Complete payment to watch this movie.
-                <br />
-                Price: <strong>KES {amount}</strong>
-              </>
-            ) : (
-              <>
-                This movie is <strong>FREE</strong>.
-                <br />
-                Enter your email to unlock and start watching.
-              </>
-            )}
+            Enter your details below to complete the purchase. Price: <strong>KES {amount}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 mt-4">
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          {success && <p className="text-green-500 text-sm">{amount > 0 ? "STK push sent. Complete payment on your phone." : "Movie unlocked! Redirecting..."}</p>}
+          {success && (
+            <p className="text-green-500 text-sm">
+              Payment request sent! Check your phone to complete the payment.
+            </p>
+          )}
 
           {!success && (
             <>
-              {amount === 0 && (
-                <Input
-                  placeholder="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              )}
-              {amount > 0 && (
-                <Input
-                  placeholder="Phone Number (2547XXXXXXXX)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              )}
+              <Input
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <Input
+                placeholder="Phone Number (e.g., 2547XXXXXXXX)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <Input
+                placeholder="Email "
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
 
-              <Button onClick={handlePurchase} disabled={loading} className="w-full mt-2">
-                {loading ? "Processing..." : amount > 0 ? `Pay KES ${amount}` : "Watch Now"}
+              <Button
+                onClick={handlePurchase}
+                disabled={loading || amount <= 0}
+                className="w-full mt-2"
+              >
+                {loading ? "Processing..." : `Pay KES ${amount}`}
               </Button>
             </>
           )}
