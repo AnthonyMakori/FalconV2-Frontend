@@ -53,7 +53,7 @@ export default function MoviePurchaseModal({
     try {
       // ✅ FREE MOVIE LOGIC
       if (amount === 0) {
-        const response = await fetch(`${API_URL}/movies/unlock-free`, {
+        const response = await fetch(`${API_URL}/stk/movies/unlock-free`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
