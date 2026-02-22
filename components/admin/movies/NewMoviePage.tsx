@@ -86,12 +86,15 @@ export default function NewMoviePage() {
       formData.append("preview_duration",previewDuration)
       formData.append("seo_title",seoTitle)
       formData.append("seo_description",seoDescription)
+     
       formData.append("seo_keywords",seoKeywords)
 
       // Append casts and images
-      casts.forEach(c => {
-        formData.append("casts[]", c.name)
-        if(c.image) formData.append("cast_images[]", c.image)
+      casts.forEach((c, index) => {
+        formData.append(`casts[${index}][name]`, c.name)
+        if (c.image) {
+          formData.append(`casts[${index}][image]`, c.image)
+        }
       })
 
       // Tags

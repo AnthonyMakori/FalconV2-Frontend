@@ -243,7 +243,7 @@ export default function NewMoviePage() {
 
       if (!res.ok) throw await res.json()
 
-      alert("Movie saved successfully 🎉")
+      alert("Movie saved successfully ")
       resetForm()
     } catch (err: any) {
       console.error(err)
