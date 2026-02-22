@@ -38,15 +38,14 @@ export default function MoviePurchaseModal({
     setAmount(Number(movie?.purchase_price || 0))
   }, [movie])
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
   const handlePurchase = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // ✅ FREE MOVIE FLOW - No auth required
+      // FREE MOVIE FLOW
       if (amount === 0) {
         if (!email) {
           setError("Email is required to unlock this free movie.")
@@ -54,7 +53,7 @@ export default function MoviePurchaseModal({
           return
         }
 
-        const response = await fetch(`${API_URL}/stk/movies/unlock-free`, {
+        const res = await fetch(`${API_URL}/stk/movies/unlock-free`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -63,9 +62,8 @@ export default function MoviePurchaseModal({
           }),
         })
 
-        const data = await response.json()
-
-        if (!response.ok) {
+        const data = await res.json()
+        if (!res.ok) {
           setError(data.message || "Failed to unlock movie.")
           setLoading(false)
           return
@@ -73,7 +71,6 @@ export default function MoviePurchaseModal({
 
         setSuccess(true)
 
-        // Auto redirect to watch page after short delay
         setTimeout(() => {
           router.push(`/watch/${movie.id}`)
         }, 1500)
@@ -82,7 +79,7 @@ export default function MoviePurchaseModal({
         return
       }
 
-      // ✅ PAID MOVIE FLOW - Auth required
+      // PAID MOVIE FLOW
       if (!token) {
         setError("You must be logged in to purchase this movie.")
         setLoading(false)
@@ -95,7 +92,7 @@ export default function MoviePurchaseModal({
         return
       }
 
-      const response = await fetch(`${API_URL}/stk/initiate`, {
+      const res = await fetch(`${API_URL}/stk/initiate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,9 +105,8 @@ export default function MoviePurchaseModal({
         }),
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
+      const data = await res.json()
+      if (!res.ok) {
         setError(data.message || "Payment initiation failed.")
         setLoading(false)
         return
@@ -118,7 +114,6 @@ export default function MoviePurchaseModal({
 
       setSuccess(true)
     } catch (err: any) {
-      console.error("Purchase error:", err)
       setError(err?.message || "Something went wrong.")
     } finally {
       setLoading(false)
@@ -142,7 +137,6 @@ export default function MoviePurchaseModal({
               ? `Purchase "${movie?.title}"`
               : `Watch "${movie?.title}"`}
           </DialogTitle>
-
           <DialogDescription>
             {amount > 0 ? (
               <>
@@ -162,18 +156,10 @@ export default function MoviePurchaseModal({
 
         <div className="space-y-3 mt-4">
           {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          {success && (
-            <p className="text-green-500 text-sm">
-              {amount > 0
-                ? "STK push sent. Complete payment on your phone."
-                : "Movie unlocked! Redirecting..."}
-            </p>
-          )}
+          {success && <p className="text-green-500 text-sm">{amount > 0 ? "STK push sent. Complete payment on your phone." : "Movie unlocked! Redirecting..."}</p>}
 
           {!success && (
             <>
-              {/* Free movie requires email */}
               {amount === 0 && (
                 <Input
                   placeholder="Email"
@@ -182,8 +168,6 @@ export default function MoviePurchaseModal({
                   onChange={(e) => setEmail(e.target.value)}
                 />
               )}
-
-              {/* Paid movie requires phone */}
               {amount > 0 && (
                 <Input
                   placeholder="Phone Number (2547XXXXXXXX)"
@@ -192,16 +176,8 @@ export default function MoviePurchaseModal({
                 />
               )}
 
-              <Button
-                onClick={handlePurchase}
-                disabled={loading}
-                className="w-full mt-2"
-              >
-                {loading
-                  ? "Processing..."
-                  : amount > 0
-                  ? `Pay KES ${amount}`
-                  : "Watch Now"}
+              <Button onClick={handlePurchase} disabled={loading} className="w-full mt-2">
+                {loading ? "Processing..." : amount > 0 ? `Pay KES ${amount}` : "Watch Now"}
               </Button>
             </>
           )}
