@@ -28,6 +28,7 @@ export default function MoviePurchaseModal({
   const router = useRouter()
 
   const [phone, setPhone] = useState("")
+  const [email, setEmail] = useState("")
   const [amount, setAmount] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,56 +39,56 @@ export default function MoviePurchaseModal({
   }, [movie])
 
   const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null
+    typeof window !== "undefined" ? localStorage.getItem("token") : null
 
   const handlePurchase = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // 🚨 Must be logged in
-      if (!token) {
-        setError("You must be logged in to continue.")
-        setLoading(false)
-        return
-      }
-
-      // ✅ FREE MOVIE FLOW
+      // ✅ FREE MOVIE FLOW - No auth required
       if (amount === 0) {
-        const response = await fetch(
-          `${API_URL}/stk/movies/unlock-free`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              movie_id: movie.id,
-            }),
-          }
-        )
+        if (!email) {
+          setError("Email is required to unlock this free movie.")
+          setLoading(false)
+          return
+        }
+
+        const response = await fetch(`${API_URL}/stk/movies/unlock-free`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            movie_id: movie.id,
+          }),
+        })
 
         const data = await response.json()
 
         if (!response.ok) {
           setError(data.message || "Failed to unlock movie.")
+          setLoading(false)
           return
         }
 
         setSuccess(true)
 
-        // Auto redirect to watch page
+        // Auto redirect to watch page after short delay
         setTimeout(() => {
           router.push(`/watch/${movie.id}`)
         }, 1500)
 
+        setLoading(false)
         return
       }
 
-      // ✅ PAID MOVIE FLOW
+      // ✅ PAID MOVIE FLOW - Auth required
+      if (!token) {
+        setError("You must be logged in to purchase this movie.")
+        setLoading(false)
+        return
+      }
+
       if (!phone) {
         setError("Phone number is required.")
         setLoading(false)
@@ -111,11 +112,11 @@ export default function MoviePurchaseModal({
 
       if (!response.ok) {
         setError(data.message || "Payment initiation failed.")
+        setLoading(false)
         return
       }
 
       setSuccess(true)
-
     } catch (err: any) {
       console.error("Purchase error:", err)
       setError(err?.message || "Something went wrong.")
@@ -128,6 +129,7 @@ export default function MoviePurchaseModal({
     setSuccess(false)
     setError(null)
     setPhone("")
+    setEmail("")
     onClose()
   }
 
@@ -144,12 +146,16 @@ export default function MoviePurchaseModal({
           <DialogDescription>
             {amount > 0 ? (
               <>
-                Complete payment to watch.
+                Complete payment to watch this movie.
                 <br />
                 Price: <strong>KES {amount}</strong>
               </>
             ) : (
-              <>This movie is <strong>FREE</strong>.</>
+              <>
+                This movie is <strong>FREE</strong>.
+                <br />
+                Enter your email to unlock and start watching.
+              </>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -167,6 +173,17 @@ export default function MoviePurchaseModal({
 
           {!success && (
             <>
+              {/* Free movie requires email */}
+              {amount === 0 && (
+                <Input
+                  placeholder="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              )}
+
+              {/* Paid movie requires phone */}
               {amount > 0 && (
                 <Input
                   placeholder="Phone Number (2547XXXXXXXX)"
