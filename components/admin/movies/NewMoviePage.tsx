@@ -31,20 +31,9 @@ export default function NewMoviePage() {
   const [castInput, setCastInput] = useState("")
   const [castImage, setCastImage] = useState<File | null>(null)
 
-  const addCast = () => {
-    if (castInput.trim()) {
-      setCasts([...casts, { name: castInput.trim(), image: castImage }])
-      setCastInput("")
-      setCastImage(null)
-    }
-  }
-  const removeCast = (name: string) => setCasts(casts.filter(c => c.name !== name))
-
   // Tags
   const [tags,setTags]=useState<string[]>([])
   const [tagInput,setTagInput]=useState("")
-  const addTag = () => { if(tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput("") } }
-  const removeTag = (t: string) => setTags(tags.filter(x => x !== t))
 
   // Media
   const [poster,setPoster]=useState<File|null>(null)
@@ -64,12 +53,30 @@ export default function NewMoviePage() {
   const [seoDescription,setSeoDescription]=useState("")
   const [seoKeywords,setSeoKeywords]=useState("")
 
+  // Casts functions
+  const addCast = () => {
+    if (castInput.trim()) {
+      setCasts([...casts, { name: castInput.trim(), image: castImage }])
+      setCastInput("")
+      setCastImage(null)
+    }
+  }
+  const removeCast = (name: string) => setCasts(casts.filter(c => c.name !== name))
+
+  // Tags functions
+  const addTag = () => { if(tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput("") } }
+  const removeTag = (t: string) => setTags(tags.filter(x => x !== t))
+
   const submitMovie = async(publish=false) => {
     setLoading(true)
     setUploadingMovie(true)
     try{
       const token = localStorage.getItem("token")
       let bunnyVideoId: string|null = null
+      if(movie){
+        // TODO: implement Bunny upload
+        // bunnyVideoId = await uploadMovieToBunny(movie)
+      }
 
       const formData = new FormData()
       formData.append("title",title)
@@ -86,21 +93,18 @@ export default function NewMoviePage() {
       formData.append("preview_duration",previewDuration)
       formData.append("seo_title",seoTitle)
       formData.append("seo_description",seoDescription)
-     
       formData.append("seo_keywords",seoKeywords)
 
-      // Append casts and images
-      casts.forEach((c, index) => {
-        formData.append(`casts[${index}][name]`, c.name)
-        if (c.image) {
-          formData.append(`casts[${index}][image]`, c.image)
-        }
+      // Append casts and their images
+      casts.forEach(c => {
+        formData.append("casts[]", c.name)
+        if(c.image) formData.append("cast_images[]", c.image)
       })
 
-      // Tags
+      // Append tags
       tags.forEach(t => formData.append("tags[]", t))
 
-      // Media
+      // Append other media
       if(poster) formData.append("poster",poster)
       if(trailer) formData.append("trailer",trailer)
       subtitles.forEach(s => formData.append("subtitles[]", s))
