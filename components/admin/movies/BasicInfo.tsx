@@ -21,7 +21,6 @@ interface BasicInfoProps {
   status: string
   setStatus: (v: string) => void
 
-  // Updated casts type
   casts: { name: string; image: File | null }[]
   addCast: () => void
   removeCast: (name: string) => void
@@ -52,6 +51,7 @@ export default function BasicInfo({
   return (
     <div className="space-y-6">
 
+      {/* Title & Description */}
       <div>
         <Label>Title</Label>
         <Input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -66,24 +66,14 @@ export default function BasicInfo({
         />
       </div>
 
+      {/* Release Year, Duration, Language */}
       <div className="grid md:grid-cols-3 gap-6">
-        <Input
-          placeholder="Release Year"
-          value={releaseYear}
-          onChange={(e) => setReleaseYear(e.target.value)}
-        />
-        <Input
-          placeholder="Duration (min)"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-        />
-        <Input
-          placeholder="Language"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-        />
+        <Input placeholder="Release Year" value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} />
+        <Input placeholder="Duration (min)" value={duration} onChange={(e) => setDuration(e.target.value)} />
+        <Input placeholder="Language" value={language} onChange={(e) => setLanguage(e.target.value)} />
       </div>
 
+      {/* Genre & Status */}
       <div className="grid md:grid-cols-2 gap-6">
         <Select onValueChange={setGenre}>
           <SelectTrigger><SelectValue placeholder="Genre" /></SelectTrigger>
@@ -104,7 +94,7 @@ export default function BasicInfo({
 
       {/* CASTS */}
       <div>
-        <Label>Cast</Label>
+        <Label>Casts</Label>
         <div className="flex flex-wrap gap-2 my-2">
           {casts.map((c) => (
             <div key={c.name} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
@@ -116,11 +106,16 @@ export default function BasicInfo({
                 />
               )}
               {c.name}
-              <span className="cursor-pointer text-red-500 font-bold" onClick={() => removeCast(c.name)}>×</span>
+              <span
+                className="cursor-pointer text-red-500 font-bold ml-1"
+                onClick={() => removeCast(c.name)}
+              >
+                ×
+              </span>
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Input
             value={castInput}
             onChange={(e) => setCastInput(e.target.value)}
@@ -132,7 +127,13 @@ export default function BasicInfo({
             onChange={(e) => setCastImage(e.target.files?.[0] || null)}
             className="border px-2 py-1 rounded"
           />
-          <button type="button" className="btn btn-sm bg-blue-600 text-white px-3 rounded" onClick={addCast}>Add</button>
+          <button
+            type="button"
+            className="btn btn-sm bg-blue-600 text-white px-3 rounded"
+            onClick={addCast}
+          >
+            Add
+          </button>
         </div>
       </div>
 
@@ -142,15 +143,13 @@ export default function BasicInfo({
         <div className="flex flex-wrap gap-2 my-2">
           {tags.map((t) => (
             <span key={t} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-              {t} <span className="cursor-pointer text-red-500 font-bold" onClick={() => removeTag(t)}>×</span>
+              {t}
+              <span className="cursor-pointer text-red-500 font-bold ml-1" onClick={() => removeTag(t)}>×</span>
             </span>
           ))}
         </div>
-        <div className="flex gap-2">
-          <Input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-          />
+        <div className="flex gap-2 items-center">
+          <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} placeholder="Add Tag" />
           <button type="button" className="btn btn-sm bg-blue-600 text-white px-3 rounded" onClick={addTag}>Add</button>
         </div>
       </div>
