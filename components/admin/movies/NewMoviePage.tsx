@@ -15,6 +15,7 @@ export default function NewMoviePage() {
 
   const [loading,setLoading] = useState(false)
   const [uploadingMovie,setUploadingMovie] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
 
   // Basic
   const [title,setTitle]=useState("")
@@ -54,6 +55,7 @@ export default function NewMoviePage() {
 
   const submitMovie = async(publish=false)=>{
     setLoading(true)
+    setUploadingMovie(true)
     try{
       const token = localStorage.getItem("token")
       let bunnyVideoId: string|null = null
@@ -61,6 +63,7 @@ export default function NewMoviePage() {
         // TODO: implement Bunny upload
         // bunnyVideoId = await uploadMovieToBunny(movie)
       }
+
       const formData = new FormData()
       formData.append("title",title)
       formData.append("description",description)
@@ -89,15 +92,23 @@ export default function NewMoviePage() {
         headers:{Authorization:`Bearer ${token}`},
         body: formData
       })
+
       if(!res.ok) throw await res.json()
-      alert("Movie saved successfully 🎉")
-    }catch(err){console.error(err); alert("Failed")}
-    finally{setLoading(false)}
+
+      // Show success message
+      setSuccessMessage("Movie Uploaded Successfully 🎉")
+      setTimeout(()=>setSuccessMessage(""), 3000)
+    }catch(err){console.error(err); setSuccessMessage("Failed to upload movie ❌"); setTimeout(()=>setSuccessMessage(""),3000)}
+    finally{
+      setLoading(false)
+      setUploadingMovie(false)
+    }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
 
+      {/* Top Bar */}
       <div className="flex items-center gap-4">
         <Link href="/admin/movies">
           <Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4"/></Button>
@@ -105,6 +116,7 @@ export default function NewMoviePage() {
         <h1 className="text-3xl font-bold">Add New Movie</h1>
       </div>
 
+      {/* Tabs */}
       <Tabs defaultValue="basic">
         <TabsList>
           <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -140,10 +152,25 @@ export default function NewMoviePage() {
         </TabsContent>
       </Tabs>
 
+      {/* Actions */}
       <div className="flex justify-end gap-4">
         <Button variant="outline" disabled={loading} onClick={()=>submitMovie(false)}>Save as Draft</Button>
         <Button disabled={loading} onClick={()=>submitMovie(true)}>Publish Movie</Button>
       </div>
+
+      {/* Loading Spinner */}
+      {uploadingMovie && (
+        <div className="fixed bottom-6 left-6 bg-blue-600 text-white px-4 py-2 rounded shadow-md animate-spin">
+          Uploading...
+        </div>
+      )}
+
+      {/* Success / Error Toast */}
+      {successMessage && (
+        <div className="fixed bottom-6 left-6 bg-green-600 text-white px-4 py-2 rounded shadow-md transition-all duration-300">
+          {successMessage}
+        </div>
+      )}
 
     </div>
   )
