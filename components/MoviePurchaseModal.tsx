@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -24,62 +25,83 @@ export default function MoviePurchaseModal({
   isOpen,
   onClose,
 }: MoviePurchaseModalProps) {
-  const [name, setName] = useState("")
+  const router = useRouter()
+
   const [phone, setPhone] = useState("")
-  const [email, setEmail] = useState("")
   const [amount, setAmount] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    if (movie?.purchase_price) {
-      setAmount(Number(movie.purchase_price))
-    } else {
-      setAmount(0)
-    }
+    setAmount(Number(movie?.purchase_price || 0))
   }, [movie])
+
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null
 
   const handlePurchase = async () => {
     setLoading(true)
     setError(null)
 
-    if (!name || !phone) {
-      setError("Name and phone number are required.")
-      setLoading(false)
-      return
-    }
-
     try {
-      // ✅ FREE MOVIE LOGIC
-      if (amount === 0) {
-        const response = await fetch(`${API_URL}/stk/movies/unlock-free`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            phone,
-            email,
-            movie_id: movie.id,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to unlock movie.")
-        }
-
-        setSuccess(true)
+      // 🚨 Must be logged in
+      if (!token) {
+        setError("You must be logged in to continue.")
+        setLoading(false)
         return
       }
 
-      // ✅ PAID MOVIE LOGIC (STK)
+      // ✅ FREE MOVIE FLOW
+      if (amount === 0) {
+        const response = await fetch(
+          `${API_URL}/stk/movies/unlock-free`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              movie_id: movie.id,
+            }),
+          }
+        )
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          setError(data.message || "Failed to unlock movie.")
+          return
+        }
+
+        setSuccess(true)
+
+        // Auto redirect to watch page
+        setTimeout(() => {
+          router.push(`/watch/${movie.id}`)
+        }, 1500)
+
+        return
+      }
+
+      // ✅ PAID MOVIE FLOW
+      if (!phone) {
+        setError("Phone number is required.")
+        setLoading(false)
+        return
+      }
+
       const response = await fetch(`${API_URL}/stk/initiate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          name,
           phone,
-          email,
           amount,
           movie_id: movie.id,
         }),
@@ -93,6 +115,7 @@ export default function MoviePurchaseModal({
       }
 
       setSuccess(true)
+
     } catch (err: any) {
       console.error("Purchase error:", err)
       setError(err?.message || "Something went wrong.")
@@ -104,9 +127,7 @@ export default function MoviePurchaseModal({
   const handleClose = () => {
     setSuccess(false)
     setError(null)
-    setName("")
     setPhone("")
-    setEmail("")
     onClose()
   }
 
@@ -117,22 +138,18 @@ export default function MoviePurchaseModal({
           <DialogTitle>
             {amount > 0
               ? `Purchase "${movie?.title}"`
-              : `Unlock "${movie?.title}"`}
+              : `Watch "${movie?.title}"`}
           </DialogTitle>
 
           <DialogDescription>
             {amount > 0 ? (
               <>
-                Enter your details below to complete the purchase.
+                Complete payment to watch.
                 <br />
                 Price: <strong>KES {amount}</strong>
               </>
             ) : (
-              <>
-                This movie is <strong>FREE</strong>.
-                <br />
-                Enter your details to unlock and start watching.
-              </>
+              <>This movie is <strong>FREE</strong>.</>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -143,28 +160,20 @@ export default function MoviePurchaseModal({
           {success && (
             <p className="text-green-500 text-sm">
               {amount > 0
-                ? "Payment request sent! Check your phone to complete the payment."
-                : "Movie unlocked successfully! You can now start watching."}
+                ? "STK push sent. Complete payment on your phone."
+                : "Movie unlocked! Redirecting..."}
             </p>
           )}
 
           {!success && (
             <>
-              <Input
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <Input
-                placeholder="Phone Number (e.g., 2547XXXXXXXX)"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-              <Input
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              {amount > 0 && (
+                <Input
+                  placeholder="Phone Number (2547XXXXXXXX)"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              )}
 
               <Button
                 onClick={handlePurchase}
@@ -175,7 +184,7 @@ export default function MoviePurchaseModal({
                   ? "Processing..."
                   : amount > 0
                   ? `Pay KES ${amount}`
-                  : "Unlock for Free"}
+                  : "Watch Now"}
               </Button>
             </>
           )}
