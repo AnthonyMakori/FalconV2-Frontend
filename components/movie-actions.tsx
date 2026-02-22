@@ -45,18 +45,24 @@ export default function MovieActions({ movie }: MovieActionsProps) {
   return (
     <>
       <div className="space-y-3">
+        {/* Purchase Movie Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
+            asChild
             size="lg"
             className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90"
             onClick={() => setIsPurchaseOpen(true)}
           >
-            <DollarSign className="h-5 w-5 mr-2" />
-            {movie?.purchase_price > 0 ? "Purchase Movie" : "Watch for Free"}
+            <Link href="#">
+              <DollarSign className="h-5 w-5 mr-2" />
+              Purchase Movie
+            </Link>
           </Button>
         </motion.div>
 
+        {/* Secondary Actions: Favorite, Watchlist, Share */}
         <div className="grid grid-cols-3 gap-2">
+          {/* Favorite */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant={isFavorited ? "default" : "outline"}
@@ -71,6 +77,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
             </Button>
           </motion.div>
 
+          {/* Watchlist */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant={isInWatchlist ? "default" : "outline"}
@@ -85,6 +92,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
             </Button>
           </motion.div>
 
+          {/* Share */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button variant="outline" size="sm" onClick={handleShare} disabled={isSharing} className="w-full">
               <Share2 className="h-4 w-4" />
@@ -94,6 +102,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
         </div>
       </div>
 
+      {/* Movie Purchase Modal */}
       <MoviePurchaseModal
         movie={movie}
         isOpen={isPurchaseOpen}
