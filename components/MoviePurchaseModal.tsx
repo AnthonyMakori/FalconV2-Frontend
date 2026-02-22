@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -13,7 +19,11 @@ interface MoviePurchaseModalProps {
   onClose: () => void
 }
 
-export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurchaseModalProps) {
+export default function MoviePurchaseModal({
+  movie,
+  isOpen,
+  onClose,
+}: MoviePurchaseModalProps) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
@@ -22,7 +32,6 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Set purchase price dynamically from the movie object
   useEffect(() => {
     if (movie?.purchase_price) {
       setAmount(Number(movie.purchase_price))
@@ -32,59 +41,72 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
   }, [movie])
 
   const handlePurchase = async () => {
-  setLoading(true)
-  setError(null)
+    setLoading(true)
+    setError(null)
 
-  if (!name || !phone) {
-    setError("Name and phone number are required.")
-    setLoading(false)
-    return
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/stk/initiate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        phone,
-        email,
-        amount,
-        movie_id: movie.id,
-      }),
-    })
-
-    const data = await response.json()
-
-    // Check for HTTP errors first
-    if (!response.ok) {
-      setError(data.message || `Payment initiation failed (HTTP ${response.status})`)
+    if (!name || !phone) {
+      setError("Name and phone number are required.")
+      setLoading(false)
       return
     }
 
-    // If API returns a 'success' boolean, use it
-    if (data.success !== undefined) {
-      if (data.success) {
-        setSuccess(true)
-      } else {
-        setError(data.message || "Payment initiation failed.")
-      }
-    } else {
-      // No 'success' boolean? assume success if HTTP 200
-      setSuccess(true)
-    }
-  } catch (err: any) {
-    console.error("Purchase error:", err)
-    setError(err?.message || "Payment initiation failed.")
-  } finally {
-    setLoading(false)
-  }
-}
+    try {
+      // ✅ FREE MOVIE LOGIC
+      if (amount === 0) {
+        const response = await fetch(`${API_URL}/movies/unlock-free`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            phone,
+            email,
+            movie_id: movie.id,
+          }),
+        })
 
+        if (!response.ok) {
+          throw new Error("Failed to unlock movie.")
+        }
+
+        setSuccess(true)
+        return
+      }
+
+      // ✅ PAID MOVIE LOGIC (STK)
+      const response = await fetch(`${API_URL}/stk/initiate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          amount,
+          movie_id: movie.id,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.message || "Payment initiation failed.")
+        return
+      }
+
+      setSuccess(true)
+    } catch (err: any) {
+      console.error("Purchase error:", err)
+      setError(err?.message || "Something went wrong.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleClose = () => {
     setSuccess(false)
     setError(null)
+    setName("")
+    setPhone("")
+    setEmail("")
     onClose()
   }
 
@@ -92,17 +114,37 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Purchase "{movie?.title}"</DialogTitle>
+          <DialogTitle>
+            {amount > 0
+              ? `Purchase "${movie?.title}"`
+              : `Unlock "${movie?.title}"`}
+          </DialogTitle>
+
           <DialogDescription>
-            Enter your details below to complete the purchase. Price: <strong>KES {amount}</strong>
+            {amount > 0 ? (
+              <>
+                Enter your details below to complete the purchase.
+                <br />
+                Price: <strong>KES {amount}</strong>
+              </>
+            ) : (
+              <>
+                This movie is <strong>FREE</strong>.
+                <br />
+                Enter your details to unlock and start watching.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 mt-4">
           {error && <p className="text-red-500 text-sm">{error}</p>}
+
           {success && (
             <p className="text-green-500 text-sm">
-              Payment request sent! Check your phone to complete the payment.
+              {amount > 0
+                ? "Payment request sent! Check your phone to complete the payment."
+                : "Movie unlocked successfully! You can now start watching."}
             </p>
           )}
 
@@ -119,17 +161,21 @@ export default function MoviePurchaseModal({ movie, isOpen, onClose }: MoviePurc
                 onChange={(e) => setPhone(e.target.value)}
               />
               <Input
-                placeholder="Email "
+                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
 
               <Button
                 onClick={handlePurchase}
-                disabled={loading || amount <= 0}
+                disabled={loading}
                 className="w-full mt-2"
               >
-                {loading ? "Processing..." : `Pay KES ${amount}`}
+                {loading
+                  ? "Processing..."
+                  : amount > 0
+                  ? `Pay KES ${amount}`
+                  : "Unlock for Free"}
               </Button>
             </>
           )}
