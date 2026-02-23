@@ -4,15 +4,16 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select"
 import { X } from "lucide-react"
 import { Dispatch, SetStateAction, useState } from "react"
-
-/* ===== MUST MATCH NewMoviePage ===== */
-export interface CastType {
-  name: string
-  image?: File | null
-}
+import type { CastType } from "@/types/movie"
 
 export interface BasicInfoProps {
   title: string
@@ -59,17 +60,17 @@ export default function BasicInfo({
   const [newCastImage, setNewCastImage] = useState<File | null>(null)
   const [newTag, setNewTag] = useState("")
 
-  /* ---------------- ADD CAST ---------------- */
+  /* ---------- ADD CAST ---------- */
 
   const addCast = () => {
     if (!newCastName.trim()) return
 
-    setCasts([
-      ...casts,
+    setCasts(prev => [
+      ...prev,
       {
         name: newCastName.trim(),
         image: newCastImage,
-      },
+      }
     ])
 
     setNewCastName("")
@@ -77,68 +78,49 @@ export default function BasicInfo({
   }
 
   const removeCast = (index: number) => {
-    setCasts(casts.filter((_, i) => i !== index))
+    setCasts(prev => prev.filter((_, i) => i !== index))
   }
 
-  /* ---------------- TAGS ---------------- */
+  /* ---------- TAGS ---------- */
 
   const addTag = () => {
     if (!newTag.trim()) return
-    setTags([...tags, newTag.trim()])
+    setTags(prev => [...prev, newTag.trim()])
     setNewTag("")
   }
 
   const removeTag = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index))
+    setTags(prev => prev.filter((_, i) => i !== index))
   }
 
   return (
     <div className="space-y-6">
 
-      {/* Title */}
       <div>
         <Label>Movie Title</Label>
-        <Input value={title} onChange={e => setTitle(e.target.value)} />
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
 
-      {/* Description */}
       <div>
         <Label>Description</Label>
         <Textarea
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Release Year</Label>
-          <Input value={releaseYear} onChange={e => setReleaseYear(e.target.value)} />
-        </div>
-
-        <div>
-          <Label>Duration</Label>
-          <Input value={duration} onChange={e => setDuration(e.target.value)} />
-        </div>
-
-        <div>
-          <Label>Language</Label>
-          <Input value={language} onChange={e => setLanguage(e.target.value)} />
-        </div>
-
-        <div>
-          <Label>Genre</Label>
-          <Input value={genre} onChange={e => setGenre(e.target.value)} />
-        </div>
+        <Input placeholder="Release Year" value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} />
+        <Input placeholder="Duration" value={duration} onChange={(e) => setDuration(e.target.value)} />
+        <Input placeholder="Language" value={language} onChange={(e) => setLanguage(e.target.value)} />
+        <Input placeholder="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} />
       </div>
 
-      {/* Status */}
       <div>
         <Label>Status</Label>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger>
-            <SelectValue placeholder="Select status" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="draft">Draft</SelectItem>
@@ -147,8 +129,7 @@ export default function BasicInfo({
         </Select>
       </div>
 
-      {/* ---------------- CAST SECTION ---------------- */}
-
+      {/* CASTS */}
       <div className="space-y-3">
         <Label>Add Cast</Label>
 
@@ -163,11 +144,12 @@ export default function BasicInfo({
             type="file"
             accept="image/*"
             onChange={(e) =>
-              setNewCastImage(e.target.files ? e.target.files[0] : null)
+              setNewCastImage(e.target.files?.[0] || null)
             }
           />
 
-          <Button type="button" onClick={addCast}>
+          {/* IMPORTANT FIX: REMOVE type="button" */}
+          <Button onClick={addCast}>
             Add
           </Button>
         </div>
@@ -199,8 +181,7 @@ export default function BasicInfo({
         </div>
       </div>
 
-      {/* ---------------- TAG SECTION ---------------- */}
-
+      {/* TAGS */}
       <div>
         <Label>Tags</Label>
 
@@ -210,7 +191,7 @@ export default function BasicInfo({
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
           />
-          <Button type="button" onClick={addTag}>Add</Button>
+          <Button onClick={addTag}>Add</Button>
         </div>
 
         <div className="flex flex-wrap gap-2 mt-3">
