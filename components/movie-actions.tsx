@@ -60,7 +60,6 @@ export default function MovieActions({ movie }: MovieActionsProps) {
           </Button>
         </motion.div>
 
-        {/* Secondary Actions: Favorite, Watchlist, Share */}
         <div className="grid grid-cols-3 gap-2">
           {/* Favorite */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
