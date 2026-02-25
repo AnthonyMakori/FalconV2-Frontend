@@ -50,6 +50,11 @@ const CircularProgress = ({ value }: { value: number }) => {
   )
 }
 
+type CastMember = {
+  name: string
+  image: File | null
+}
+
 export default function NewMoviePage() {
   const [loading, setLoading] = useState(false)
   const [uploadingMovie, setUploadingMovie] = useState(false)
@@ -64,20 +69,29 @@ export default function NewMoviePage() {
   const [genre, setGenre] = useState("")
   const [status, setStatus] = useState("draft")
 
-  const [casts, setCasts] = useState<string[]>([])
+  const [casts, setCasts] = useState<CastMember[]>([])
   const [castInput, setCastInput] = useState("")
+  const [castImage, setCastImage] = useState<File | null>(null)
+
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState("")
 
   const addCast = () => {
     if (castInput.trim()) {
-      setCasts([...casts, castInput.trim()])
+      setCasts([
+        ...casts,
+        {
+          name: castInput.trim(),
+          image: castImage
+        }
+      ])
       setCastInput("")
+      setCastImage(null)
     }
   }
 
-  const removeCast = (c: string) =>
-    setCasts(casts.filter(x => x !== c))
+  const removeCast = (name: string) =>
+    setCasts(casts.filter(c => c.name !== name))
 
   const addTag = () => {
     if (tagInput.trim()) {
@@ -107,7 +121,7 @@ export default function NewMoviePage() {
   const [seoDescription, setSeoDescription] = useState("")
   const [seoKeywords, setSeoKeywords] = useState("")
 
-  /* -------------------- Bunny Upload (with progress) -------------------- */
+  /* -------------------- Bunny Upload -------------------- */
   const uploadVideoToBunny = (file: File): Promise<string> => {
     return new Promise(async (resolve, reject) => {
       if (!BUNNY_LIBRARY_ID || !BUNNY_ACCESS_KEY) {
@@ -116,7 +130,6 @@ export default function NewMoviePage() {
       }
 
       try {
-        // 1️⃣ Create video
         const createRes = await fetch(
           `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
           {
@@ -136,7 +149,6 @@ export default function NewMoviePage() {
 
         const { guid } = await createRes.json()
 
-        // 2️⃣ Upload file with progress
         const xhr = new XMLHttpRequest()
         xhr.open(
           "PUT",
@@ -167,7 +179,7 @@ export default function NewMoviePage() {
     })
   }
 
-  /* -------------------- Reset Form -------------------- */
+  /* -------------------- Reset -------------------- */
   const resetForm = () => {
     setTitle("")
     setDescription("")
@@ -178,6 +190,7 @@ export default function NewMoviePage() {
     setStatus("draft")
     setCasts([])
     setCastInput("")
+    setCastImage(null)
     setTags([])
     setTagInput("")
     setPoster(null)
@@ -195,7 +208,7 @@ export default function NewMoviePage() {
     setUploadProgress(0)
   }
 
-  /* -------------------- Submit Movie -------------------- */
+  /* -------------------- Submit -------------------- */
   const submitMovie = async (publish = false) => {
     setLoading(true)
     try {
@@ -209,6 +222,7 @@ export default function NewMoviePage() {
       }
 
       const formData = new FormData()
+
       formData.append("title", title)
       formData.append("description", description)
       formData.append("release_year", releaseYear)
@@ -227,7 +241,14 @@ export default function NewMoviePage() {
       formData.append("seo_description", seoDescription)
       formData.append("seo_keywords", seoKeywords)
 
-      casts.forEach(c => formData.append("casts[]", c))
+      // Updated Cast Submission
+      casts.forEach((c, index) => {
+        formData.append(`casts[${index}][name]`, c.name)
+        if (c.image) {
+          formData.append(`casts[${index}][image]`, c.image)
+        }
+      })
+
       tags.forEach(t => formData.append("tags[]", t))
 
       if (poster) formData.append("poster", poster)
@@ -243,7 +264,7 @@ export default function NewMoviePage() {
 
       if (!res.ok) throw await res.json()
 
-      alert("Movie saved successfully ")
+      alert("Movie saved successfully")
       resetForm()
     } catch (err: any) {
       console.error(err)
@@ -275,19 +296,34 @@ export default function NewMoviePage() {
 
         <TabsContent value="basic">
           <BasicInfo {...{
-            title, setTitle, description, setDescription,
-            releaseYear, setReleaseYear, duration, setDuration,
-            language, setLanguage, genre, setGenre,
+            title, setTitle,
+            description, setDescription,
+            releaseYear, setReleaseYear,
+            duration, setDuration,
+            language, setLanguage,
+            genre, setGenre,
             status, setStatus,
-            casts, addCast, removeCast, castInput, setCastInput,
-            tags, addTag, removeTag, tagInput, setTagInput
+            casts,
+            addCast,
+            removeCast,
+            castInput,
+            setCastInput,
+            castImage,
+            setCastImage,
+            tags,
+            addTag,
+            removeTag,
+            tagInput,
+            setTagInput
           }} />
         </TabsContent>
 
         <TabsContent value="media">
           <MediaUploadSection {...{
-            poster, setPoster, trailer, setTrailer,
-            movie, setMovie, subtitles, setSubtitles,
+            poster, setPoster,
+            trailer, setTrailer,
+            movie, setMovie,
+            subtitles, setSubtitles,
             uploadingMovie
           }} />
           {uploadingMovie && (

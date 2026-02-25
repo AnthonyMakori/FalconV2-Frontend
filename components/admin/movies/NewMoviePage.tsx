@@ -1,22 +1,22 @@
 'use client'
+
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import BasicInfo from "./BasicInfo"
-import MediaUploadSection from "./MediaUploadSection"
-import PricingInfo from "./PricingInfo"
-import SeoInfo from "./SeoInfo"
+import BasicInfo, { CastMember } from "@/components/admin/movies/BasicInfo"
+import MediaUploadSection from "@/components/admin/movies/MediaUploadSection"
+import PricingInfo from "@/components/admin/movies/PricingInfo"
+import SeoInfo from "@/components/admin/movies/SeoInfo"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!
 
 export default function NewMoviePage() {
 
   const [loading,setLoading] = useState(false)
-  const [uploadingMovie,setUploadingMovie] = useState(false)
 
-  // Basic
+  /* ---------------- BASIC ---------------- */
   const [title,setTitle]=useState("")
   const [description,setDescription]=useState("")
   const [releaseYear,setReleaseYear]=useState("")
@@ -24,44 +24,57 @@ export default function NewMoviePage() {
   const [language,setLanguage]=useState("")
   const [genre,setGenre]=useState("")
   const [status,setStatus]=useState("draft")
-  const [casts,setCasts]=useState<string[]>([])
+
+  const [casts,setCasts]=useState<CastMember[]>([])
   const [castInput,setCastInput]=useState("")
+  const [castImage,setCastImage]=useState<File|null>(null)
+
   const [tags,setTags]=useState<string[]>([])
   const [tagInput,setTagInput]=useState("")
 
-  // Media
+  const addCast = () => {
+    if(!castInput.trim()) return
+    setCasts([...casts,{ name: castInput.trim(), image: castImage }])
+    setCastInput("")
+    setCastImage(null)
+  }
+
+  const removeCast=(name:string)=>
+    setCasts(casts.filter(c=>c.name!==name))
+
+  const addTag=()=>{
+    if(!tagInput.trim()) return
+    setTags([...tags,tagInput.trim()])
+    setTagInput("")
+  }
+
+  const removeTag=(t:string)=>
+    setTags(tags.filter(x=>x!==t))
+
+  /* ---------------- MEDIA ---------------- */
   const [poster,setPoster]=useState<File|null>(null)
   const [trailer,setTrailer]=useState<File|null>(null)
   const [movie,setMovie]=useState<File|null>(null)
   const [subtitles,setSubtitles]=useState<File[]>([])
 
-  // Pricing
+  /* ---------------- PRICING ---------------- */
   const [rentalPrice,setRentalPrice]=useState("")
   const [purchasePrice,setPurchasePrice]=useState("")
   const [rentalPeriod,setRentalPeriod]=useState("")
   const [freePreview,setFreePreview]=useState(false)
   const [previewDuration,setPreviewDuration]=useState("")
 
-  // SEO
+  /* ---------------- SEO ---------------- */
   const [seoTitle,setSeoTitle]=useState("")
   const [seoDescription,setSeoDescription]=useState("")
   const [seoKeywords,setSeoKeywords]=useState("")
-
-  const addCast = ()=>{if(castInput.trim()) {setCasts([...casts,castInput.trim()]); setCastInput("")}}
-  const removeCast=(c:string)=>setCasts(casts.filter(x=>x!==c))
-  const addTag = ()=>{if(tagInput.trim()){setTags([...tags,tagInput.trim()]); setTagInput("")}}
-  const removeTag=(t:string)=>setTags(tags.filter(x=>x!==t))
 
   const submitMovie = async(publish=false)=>{
     setLoading(true)
     try{
       const token = localStorage.getItem("token")
-      let bunnyVideoId: string|null = null
-      if(movie){
-        // TODO: implement Bunny upload
-        // bunnyVideoId = await uploadMovieToBunny(movie)
-      }
       const formData = new FormData()
+
       formData.append("title",title)
       formData.append("description",description)
       formData.append("release_year",releaseYear)
@@ -69,29 +82,44 @@ export default function NewMoviePage() {
       formData.append("language",language)
       formData.append("genre",genre)
       formData.append("status",publish?"published":status)
+
       formData.append("rental_price",rentalPrice)
       formData.append("purchase_price",purchasePrice)
       formData.append("rental_period",rentalPeriod)
-      formData.append("free_preview",String(freePreview))
+      formData.append("free_preview",freePreview?"1":"0")
       formData.append("preview_duration",previewDuration)
+
       formData.append("seo_title",seoTitle)
       formData.append("seo_description",seoDescription)
       formData.append("seo_keywords",seoKeywords)
-      casts.forEach(c=>formData.append("casts[]",c))
+
+      /* ---- CASTS ---- */
+      casts.forEach((c,index)=>{
+        formData.append(`casts[${index}][name]`,c.name)
+        if(c.image){
+          formData.append(`casts[${index}][image]`,c.image)
+        }
+      })
+
       tags.forEach(t=>formData.append("tags[]",t))
+
       if(poster) formData.append("poster",poster)
       if(trailer) formData.append("trailer",trailer)
       subtitles.forEach(s=>formData.append("subtitles[]",s))
-      if(bunnyVideoId) formData.append("bunny_video_id",bunnyVideoId)
 
       const res = await fetch(`${API_URL}/movies`,{
         method:"POST",
         headers:{Authorization:`Bearer ${token}`},
         body: formData
       })
+
       if(!res.ok) throw await res.json()
       alert("Movie saved successfully 🎉")
-    }catch(err){console.error(err); alert("Failed")}
+
+    }catch(err){
+      console.error(err)
+      alert("Failed")
+    }
     finally{setLoading(false)}
   }
 
@@ -100,7 +128,9 @@ export default function NewMoviePage() {
 
       <div className="flex items-center gap-4">
         <Link href="/admin/movies">
-          <Button variant="outline" size="icon"><ArrowLeft className="h-4 w-4"/></Button>
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4"/>
+          </Button>
         </Link>
         <h1 className="text-3xl font-bold">Add New Movie</h1>
       </div>
@@ -115,34 +145,51 @@ export default function NewMoviePage() {
 
         <TabsContent value="basic">
           <BasicInfo
-            title={title} setTitle={setTitle}
-            description={description} setDescription={setDescription}
-            releaseYear={releaseYear} setReleaseYear={setReleaseYear}
-            duration={duration} setDuration={setDuration}
-            language={language} setLanguage={setLanguage}
-            genre={genre} setGenre={setGenre}
-            status={status} setStatus={setStatus}
-            casts={casts} addCast={addCast} removeCast={removeCast} castInput={castInput} setCastInput={setCastInput}
-            tags={tags} addTag={addTag} removeTag={removeTag} tagInput={tagInput} setTagInput={setTagInput}
+            {...{
+              title,setTitle,
+              description,setDescription,
+              releaseYear,setReleaseYear,
+              duration,setDuration,
+              language,setLanguage,
+              genre,setGenre,
+              status,setStatus,
+              casts,castInput,setCastInput,
+              setCastImage,addCast,removeCast,
+              tags,addTag,removeTag,
+              tagInput,setTagInput
+            }}
           />
         </TabsContent>
 
         <TabsContent value="media">
-          <MediaUploadSection poster={poster} setPoster={setPoster} trailer={trailer} setTrailer={setTrailer} movie={movie} setMovie={setMovie} subtitles={subtitles} setSubtitles={setSubtitles} uploadingMovie={uploadingMovie}/>
+          <MediaUploadSection
+            {...{poster,setPoster,trailer,setTrailer,movie,setMovie,subtitles,setSubtitles}}
+          />
         </TabsContent>
 
         <TabsContent value="pricing">
-          <PricingInfo rentalPrice={rentalPrice} setRentalPrice={setRentalPrice} purchasePrice={purchasePrice} setPurchasePrice={setPurchasePrice} rentalPeriod={rentalPeriod} setRentalPeriod={setRentalPeriod} freePreview={freePreview} setFreePreview={setFreePreview} previewDuration={previewDuration} setPreviewDuration={setPreviewDuration}/>
+          <PricingInfo
+            {...{rentalPrice,setRentalPrice,purchasePrice,setPurchasePrice,
+            rentalPeriod,setRentalPeriod,freePreview,setFreePreview,
+            previewDuration,setPreviewDuration}}
+          />
         </TabsContent>
 
         <TabsContent value="seo">
-          <SeoInfo seoTitle={seoTitle} setSeoTitle={setSeoTitle} seoDescription={seoDescription} setSeoDescription={setSeoDescription} seoKeywords={seoKeywords} setSeoKeywords={setSeoKeywords}/>
+          <SeoInfo
+            {...{seoTitle,setSeoTitle,seoDescription,setSeoDescription,
+            seoKeywords,setSeoKeywords}}
+          />
         </TabsContent>
       </Tabs>
 
       <div className="flex justify-end gap-4">
-        <Button variant="outline" disabled={loading} onClick={()=>submitMovie(false)}>Save as Draft</Button>
-        <Button disabled={loading} onClick={()=>submitMovie(true)}>Publish Movie</Button>
+        <Button variant="outline" disabled={loading} onClick={()=>submitMovie(false)}>
+          Save as Draft
+        </Button>
+        <Button disabled={loading} onClick={()=>submitMovie(true)}>
+          Publish Movie
+        </Button>
       </div>
 
     </div>
