@@ -49,7 +49,10 @@ export default function BasicInfo({
 
       <div>
         <Label>Title</Label>
-        <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
+        <Input 
+          value={title} 
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} 
+        />
       </div>
 
       <div>
@@ -79,22 +82,34 @@ export default function BasicInfo({
         />
       </div>
 
+      {/* Genre + Status */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Select onValueChange={setGenre}>
-          <SelectTrigger><SelectValue placeholder="Genre" /></SelectTrigger>
-          <SelectContent>
-            {["action","comedy","drama","horror","romance","thriller"].map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-          </SelectContent>
-        </Select>
 
-        <Select onValueChange={setStatus}>
-          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Manual Genre Input */}
+        <div>
+          <Label>Genre</Label>
+          <Input
+            placeholder="Enter genre (e.g. Sci-Fi, Drama, Action)"
+            value={genre}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGenre(e.target.value)}
+          />
+        </div>
+
+        {/* Status Select */}
+        <div>
+          <Label>Status</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
       </div>
 
       {/* CASTS */}
@@ -103,7 +118,13 @@ export default function BasicInfo({
         <div className="flex flex-wrap gap-2 my-2">
           {casts.map((c) => (
             <span key={c} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-              {c} <span className="cursor-pointer" onClick={() => removeCast(c)}>×</span>
+              {c}
+              <span 
+                className="cursor-pointer"
+                onClick={() => removeCast(c)}
+              >
+                ×
+              </span>
             </span>
           ))}
         </div>
@@ -112,7 +133,9 @@ export default function BasicInfo({
             value={castInput}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCastInput(e.target.value)}
           />
-          <button type="button" className="btn btn-sm" onClick={addCast}>Add</button>
+          <button type="button" className="btn btn-sm" onClick={addCast}>
+            Add
+          </button>
         </div>
       </div>
 
@@ -122,7 +145,13 @@ export default function BasicInfo({
         <div className="flex flex-wrap gap-2 my-2">
           {tags.map((t) => (
             <span key={t} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full text-sm">
-              {t} <span className="cursor-pointer" onClick={() => removeTag(t)}>×</span>
+              {t}
+              <span 
+                className="cursor-pointer"
+                onClick={() => removeTag(t)}
+              >
+                ×
+              </span>
             </span>
           ))}
         </div>
@@ -131,7 +160,9 @@ export default function BasicInfo({
             value={tagInput}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
           />
-          <button type="button" className="btn btn-sm" onClick={addTag}>Add</button>
+          <button type="button" className="btn btn-sm" onClick={addTag}>
+            Add
+          </button>
         </div>
       </div>
 
