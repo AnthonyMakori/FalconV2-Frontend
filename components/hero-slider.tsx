@@ -122,7 +122,7 @@ export default function HeroSlider() {
 
           <div className="flex flex-wrap items-center space-x-2 sm:space-x-4 mb-3 sm:mb-4">
             <span className="inline-flex items-center rounded-full bg-primary/20 backdrop-blur-sm px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium text-primary">
-              ⭐ {currentMovie.vote_average.toFixed(1)}
+              ⭐ {(Number(currentMovie.vote_average) || 0).toFixed(1)}
             </span>
             <span className="text-xs sm:text-sm text-muted-foreground">
               {new Date(currentMovie.release_date).getFullYear()}

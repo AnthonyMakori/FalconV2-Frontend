@@ -111,10 +111,10 @@ export default function MovieAnalyticsItem({
           <p className="font-medium truncate">{movie.title}</p>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {movie.release_date && <span>{new Date(movie.release_date).getFullYear()}</span>}
-            {movie.vote_average > 0 && (
+           {movie.vote_average > 0 && (
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                <span>{movie.vote_average.toFixed(1)}</span>
+                <span>{(Number(movie.vote_average) || 0).toFixed(1)}</span>
               </div>
             )}
           </div>

@@ -192,8 +192,10 @@ export default function MovieClientPage({ params }: { params: { id: string } }) 
                 {movie.vote_average > 0 && (
                   <div className="flex items-center gap-1 bg-background/20 backdrop-blur-sm rounded-full px-2 sm:px-3 py-1">
                     <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-primary text-primary" />
-                    <span className="text-xs sm:text-sm font-medium">{movie.vote_average.toFixed(1)}</span>
-                  </div>
+                      <span className="text-xs sm:text-sm font-medium">
+                        {(Number(movie.vote_average) || 0).toFixed(1)}
+                      </span>                 
+              </div>
                 )}
 
                 {movie.release_date && (
