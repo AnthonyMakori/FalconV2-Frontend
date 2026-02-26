@@ -93,7 +93,7 @@ export default function CastSection({ credits }: CastSectionProps) {
                     <div className="overflow-hidden rounded-lg bg-muted">
                       {person.profile_path ? (
                         <Image
-                          src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                          src={`${process.env.NEXT_PUBLIC_API_URL}/public/assets${person.profile_path}`}
                           alt={person.name}
                           width={160}
                           height={240}
