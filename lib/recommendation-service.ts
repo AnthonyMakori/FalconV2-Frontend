@@ -97,7 +97,7 @@ class RecommendationService {
     for (const viewedMovie of mostViewedMovies.slice(0, 5)) {
       try {
         const { results } = await getMovieRecommendations(viewedMovie.movieId)
-        recommendations.push(...results.slice(0, 4)) // Top 4 from each
+        recommendations.push(...this.normalizeVoteAverage(results).slice(0, 4)) // Top 4 from each
       } catch (error) {
         console.error(`Failed to get recommendations for movie ${viewedMovie.movieId}:`, error)
       }
@@ -111,12 +111,14 @@ class RecommendationService {
     const recommendations: any[] = []
 
     // Sort favorites by rating and take top 5
-    const topFavorites = favorites.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0)).slice(0, 5)
+    const topFavorites = favorites
+      .sort((a, b) => (Number(b.vote_average) || 0) - (Number(a.vote_average) || 0))
+      .slice(0, 5)
 
     for (const movie of topFavorites) {
       try {
         const { results } = await getMovieRecommendations(movie.id.toString())
-        recommendations.push(...results.slice(0, 3)) // Top 3 from each
+        recommendations.push(...this.normalizeVoteAverage(results).slice(0, 3)) // Top 3 from each
       } catch (error) {
         console.error(`Failed to get recommendations for movie ${movie.id}:`, error)
       }
@@ -129,12 +131,10 @@ class RecommendationService {
   private async getGenreBasedRecommendations(favoriteGenres: number[]): Promise<any[]> {
     const recommendations: any[] = []
 
-    // Get movies from all favorite genres, not just top ones
     for (const genreId of favoriteGenres) {
       try {
         const { results } = await getMoviesByGenre(genreId.toString())
-        // Get a variety of movies from each genre
-        recommendations.push(...results.slice(0, 8))
+        recommendations.push(...this.normalizeVoteAverage(results).slice(0, 8))
       } catch (error) {
         console.error(`Failed to get movies for genre ${genreId}:`, error)
       }
@@ -143,39 +143,25 @@ class RecommendationService {
     return recommendations
   }
 
-  // Popular movies with user preference weighting
+  // Popular movies
   private async getPopularRecommendations(userProfile: UserProfile): Promise<any[]> {
     try {
       const { results } = await getPopularMovies()
-
-      return results
-        .filter((movie) => {
-          // More lenient filtering for popular movies
-          if (movie.vote_average < userProfile.averageRating - 2) {
-            return false
-          }
-          return true
-        })
-        .slice(0, 15) // More popular movies
+      return this.normalizeVoteAverage(results)
+        .filter((movie) => (Number(movie.vote_average) || 0) >= userProfile.averageRating - 2)
+        .slice(0, 15)
     } catch (error) {
       console.error("Failed to get popular recommendations:", error)
       return []
     }
   }
 
-  // Top-rated movies matching preferences
+  // Top-rated movies
   private async getTopRatedRecommendations(userProfile: UserProfile): Promise<any[]> {
     try {
       const { results } = await getTopRatedMovies()
-
-      return results
-        .filter((movie) => {
-          // Filter by rating preference
-          if (movie.vote_average < userProfile.averageRating - 1) {
-            return false
-          }
-          return true
-        })
+      return this.normalizeVoteAverage(results)
+        .filter((movie) => (Number(movie.vote_average) || 0) >= userProfile.averageRating - 1)
         .slice(0, 10)
     } catch (error) {
       console.error("Failed to get top-rated recommendations:", error)
@@ -183,19 +169,12 @@ class RecommendationService {
     }
   }
 
-  // Trending movies with user preference weighting
+  // Trending movies
   private async getTrendingRecommendations(userProfile: UserProfile): Promise<any[]> {
     try {
       const { results } = await getTrendingMovies()
-
-      return results
-        .filter((movie) => {
-          // Very lenient filtering for trending
-          if (movie.vote_average < 5.0) {
-            return false
-          }
-          return true
-        })
+      return this.normalizeVoteAverage(results)
+        .filter((movie) => (Number(movie.vote_average) || 0) >= 5.0)
         .slice(0, 8)
     } catch (error) {
       console.error("Failed to get trending recommendations:", error)
@@ -203,40 +182,28 @@ class RecommendationService {
     }
   }
 
-  // Score recommendations based on user preferences and engagement
+  // Score recommendations
   private scoreRecommendations(movies: any[], userProfile: UserProfile): any[] {
     return movies
       .map((movie) => {
-        let score = movie.vote_average || 0
+        const voteAvg = Number(movie.vote_average) || 0
+        let score = voteAvg
 
-        // Boost score for preferred genres (high weight)
         if (userProfile.favoriteGenres.length > 0 && movie.genre_ids) {
           const genreMatches = movie.genre_ids.filter((genreId: number) =>
             userProfile.favoriteGenres.includes(genreId),
           ).length
-          score += genreMatches * 1.5 // Moderate boost for genre matches
+          score += genreMatches * 1.5
         }
 
-        // Boost score for movies in preferred rating range
-        if (movie.vote_average >= userProfile.averageRating - 1) {
-          score += 1.0
-        }
+        if (voteAvg >= userProfile.averageRating - 1) score += 1.0
 
-        // Boost score for recent movies (if user has engagement with recent content)
         const releaseYear = movie.release_date ? new Date(movie.release_date).getFullYear() : 0
-        if (releaseYear >= 2020) {
-          score += 0.5
-        }
+        if (releaseYear >= 2020) score += 0.5
 
-        // Boost score for popular movies
-        if (movie.popularity > 100) {
-          score += 0.3
-        }
+        if (movie.popularity > 100) score += 0.3
 
-        // Apply engagement score multiplier (smaller impact)
         score *= 1 + userProfile.engagementScore * 0.05
-
-        // Add some randomness to ensure variety
         score += Math.random() * 0.5
 
         return { ...movie, recommendationScore: score }
@@ -244,23 +211,14 @@ class RecommendationService {
       .sort((a, b) => b.recommendationScore - a.recommendationScore)
   }
 
-  // Build comprehensive user profile from stored data
+  // Build user profile
   buildUserProfile(): UserProfile {
     try {
-      // Get data from localStorage and analytics
       const favorites = JSON.parse(localStorage.getItem("cynthia-movies-favorites") || "[]")
       const watchlist = JSON.parse(localStorage.getItem("cynthia-movies-watchlist") || "[]")
       const userPreferences = getUserPreferences()
       const mostViewedMovies = getMostViewedMovies()
 
-      console.log("Building user profile:", {
-        favoritesCount: favorites.length,
-        watchlistCount: watchlist.length,
-        mostViewedCount: mostViewedMovies.length,
-        engagementScore: userPreferences.engagementScore,
-      })
-
-      // Extract favorite genres from favorites
       const genreMap = new Map<number, number>()
       favorites.forEach((movie: any) => {
         if (movie.genre_ids) {
@@ -272,14 +230,14 @@ class RecommendationService {
 
       const favoriteGenres = Array.from(genreMap.entries())
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 8) // Include more genres for variety
+        .slice(0, 8)
         .map(([genreId]) => genreId)
 
-      // Calculate average rating from favorites
       const averageRating =
         favorites.length > 0
-          ? favorites.reduce((sum: number, movie: any) => sum + (movie.vote_average || 0), 0) / favorites.length
-          : 6.5 // Lower default for more variety
+          ? favorites.reduce((sum: number, movie: any) => sum + (Number(movie.vote_average) || 0), 0) /
+            favorites.length
+          : 6.5
 
       return {
         favoriteGenres,
@@ -307,11 +265,18 @@ class RecommendationService {
       }
     }
   }
+
+  // Helper: normalize vote_average for all movies
+  private normalizeVoteAverage(movies: any[]): any[] {
+    return movies.map((movie) => ({
+      ...movie,
+      vote_average: movie.vote_average != null ? Number(movie.vote_average) : 0,
+    }))
+  }
 }
 
 export const recommendationService = new RecommendationService()
 
-// Convenience function for getting personalized recommendations
 export async function getPersonalizedRecommendations(limit = 20): Promise<any[]> {
   const userProfile = recommendationService.buildUserProfile()
   return recommendationService.generateRecommendations(userProfile, limit)
