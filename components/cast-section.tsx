@@ -64,8 +64,7 @@ export default function CastSection({ credits }: CastSectionProps) {
                   <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
                     {person.profile_path ? (
                       <Image
-                        src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                        alt={person.name}
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/public/assets${person.profile_path}`}                        alt={person.name}
                         width={48}
                         height={48}
                         className="w-full h-full object-cover"
