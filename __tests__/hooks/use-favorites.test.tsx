@@ -54,7 +54,7 @@ describe("useFavorites", () => {
     })
 
     expect(result.current.favorites).toContain(mockMovie)
-    expect(localStorageMock.setItem).toHaveBeenCalledWith("cynthia-movies-favorites", JSON.stringify([mockMovie]))
+    expect(localStorageMock.setItem).toHaveBeenCalledWith("Falcon-Eye-favorites", JSON.stringify([mockMovie]))
   })
 
   it("removes movie from favorites", () => {
@@ -66,7 +66,7 @@ describe("useFavorites", () => {
     })
 
     expect(result.current.favorites).not.toContain(mockMovie)
-    expect(localStorageMock.setItem).toHaveBeenCalledWith("cynthia-movies-favorites", JSON.stringify([]))
+    expect(localStorageMock.setItem).toHaveBeenCalledWith("Falcon-Eye-favorites", JSON.stringify([]))
   })
 
   it("checks if movie is favorite", () => {
